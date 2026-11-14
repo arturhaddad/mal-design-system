@@ -1,0 +1,8 @@
+/*
+ * Docs pages only. Tailwind's reset removes list markers everywhere. That is
+ * right for components and wrong for prose, where the README's steps are
+ * numbered. Stories embedded in a docs page keep the reset.
+ */
+#storybook-docs ol:not(.docs-story ol) {
+  list-style: decimal;
+}

@@ -2,6 +2,7 @@ import type { Preview } from '@storybook/react-vite'
 
 import '../src/fonts.css'
 import '../src/styles.css'
+import './docs.css'
 
 import { malTheme } from './theme'
 

@@ -36,7 +36,7 @@ function TokenTable({ title, description, prefix }: { title: string; description
   const [tokens] = useState(() => readTokens(prefix))
 
   return (
-    <section>
+    <section className="min-w-0">
       <h2 className="text-heading text-default">{title}</h2>
       <p className="mt-1 max-w-2xl text-body-sm text-muted">{description}</p>
       <div className="mt-4 overflow-x-auto rounded-card border border-default bg-surface">
@@ -111,16 +111,16 @@ function Ramp({ hue }: { hue: string }) {
   const [steps] = useState(() => readTokens(`--mal-${hue}-`))
 
   return (
-    <div>
+    <div className="min-w-0">
       <h3 className="text-label text-default capitalize">{hue}</h3>
-      <ul className="mt-2 flex overflow-hidden rounded-control border border-default">
+      <ul className="mt-2 flex flex-wrap overflow-hidden rounded-control border border-default">
         {steps.map(({ name, light }) => {
           const onWhite = contrastRatio(light, '#ffffff')
           return (
             <li
               key={name}
               style={{ backgroundColor: light, color: onWhite >= 4.5 ? '#ffffff' : '#020b0e' }}
-              className="flex min-w-0 flex-1 flex-col gap-0.5 px-2 py-3"
+              className="flex min-w-16 flex-1 flex-col gap-0.5 px-2 py-3"
             >
               <span className="text-caption">{name.split('-').at(-1)}</span>
               <span className="truncate text-caption font-regular">{light}</span>
