@@ -55,6 +55,10 @@ const sizes: Record<ButtonSize, string> = {
   lg: 'h-control-lg px-6 text-body font-medium',
 }
 
+/**
+ * Triggers an action. A view has one `primary` button; the other variants step
+ * down from it. To navigate, use a link instead.
+ */
 export function Button({
   variant = 'primary',
   size = 'md',

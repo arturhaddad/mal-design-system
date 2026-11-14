@@ -69,6 +69,10 @@ const interactive: Record<TransactionCardVariant, string> = {
   row: 'hover:bg-subtle',
 }
 
+/**
+ * One transaction: who, how much, when, and whether it went through. Amounts
+ * arrive as integers in minor units and are formatted for the locale.
+ */
 export function TransactionCard({
   title,
   description,

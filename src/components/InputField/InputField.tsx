@@ -45,6 +45,11 @@ const sizes: Record<InputFieldSize, { control: string; text: string }> = {
   lg: { control: 'h-control-lg', text: 'text-body-lg' },
 }
 
+/**
+ * A single-line text input with its label, hint and error already wired
+ * together for assistive technology. Every native `<input>` prop passes
+ * through; `className` goes to the outer wrapper, for layout.
+ */
 export function InputField({
   label,
   hideLabel = false,

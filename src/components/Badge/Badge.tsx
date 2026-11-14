@@ -19,6 +19,7 @@ const tones: Record<BadgeTone, string> = {
   danger: 'bg-danger-subtle text-danger',
 }
 
+/** A short status label. Tone adds colour, and the text carries the meaning. */
 export function Badge({ tone = 'neutral', icon, className, children, ...props }: BadgeProps) {
   return (
     <span
