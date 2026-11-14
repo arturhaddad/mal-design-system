@@ -61,17 +61,19 @@ export function AlertIcon(props: IconProps) {
   )
 }
 
-export function ArrowUpRightIcon(props: IconProps) {
+/** Directional: mirrors in right-to-left text, where "forward" points the other way. */
+export function ArrowUpRightIcon({ className, ...props }: IconProps) {
   return (
-    <Icon {...props}>
+    <Icon className={cx('rtl:-scale-x-100', className)} {...props}>
       <path d="M7 17 17 7M8.5 7H17v8.5" />
     </Icon>
   )
 }
 
-export function ArrowDownLeftIcon(props: IconProps) {
+/** Directional: mirrors in right-to-left text. */
+export function ArrowDownLeftIcon({ className, ...props }: IconProps) {
   return (
-    <Icon {...props}>
+    <Icon className={cx('rtl:-scale-x-100', className)} {...props}>
       <path d="M17 7 7 17M15.5 17H7V8.5" />
     </Icon>
   )
