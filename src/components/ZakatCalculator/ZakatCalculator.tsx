@@ -2,14 +2,14 @@ import { useId, useRef, useState, type FormEvent } from 'react'
 
 import { KhatamPattern } from '../../icons/KhatamPattern'
 import { cx } from '../../lib/cx'
-import { currencySymbol, formatMoney, parseMoney } from '../../lib/money'
+import { currencySymbol, formatMoney, minorUnitDigits, parseMoney } from '../../lib/money'
 import { Button } from '../Button'
 import { InputField } from '../InputField'
 import { calculateZakat, DEFAULT_ZAKAT_RATE, type ZakatResult } from './calculateZakat'
 
 export type ZakatCalculatorVariant = 'detailed' | 'quick'
 
-type FieldName = 'cash' | 'metals' | 'investments' | 'liabilities' | 'wealth'
+export type ZakatField = 'cash' | 'metals' | 'investments' | 'liabilities' | 'wealth'
 
 /**
  * Every string the calculator renders. English is the default; pass
@@ -57,6 +57,11 @@ export interface ZakatCalculatorProps {
   /** BCP 47 locale for amounts and the rate. */
   locale?: string
   labels?: Partial<ZakatCalculatorLabels>
+  /**
+   * Prefills fields, in minor units, e.g. from the customer's balances. A
+   * prefilled calculator opens with its result already worked out.
+   */
+  defaultValues?: Partial<Record<ZakatField, number>>
   /** Called with every successful calculation. */
   onCalculate?: (result: ZakatResult) => void
   /** Shows a "Pay" action on the result when zakat is due. */
@@ -86,13 +91,23 @@ const defaultLabels: ZakatCalculatorLabels = {
   disclaimer: 'This is an estimate, not a religious ruling.',
 }
 
-const fieldsByVariant: Record<ZakatCalculatorVariant, FieldName[]> = {
+const fieldsByVariant: Record<ZakatCalculatorVariant, ZakatField[]> = {
   detailed: ['cash', 'metals', 'investments', 'liabilities'],
   quick: ['wealth'],
 }
 
-const emptyValues: Record<FieldName, string> = { cash: '', metals: '', investments: '', liabilities: '', wealth: '' }
+const emptyValues: Record<ZakatField, string> = { cash: '', metals: '', investments: '', liabilities: '', wealth: '' }
 
+function totals(amounts: Partial<Record<ZakatField, number>>) {
+  const { cash = 0, metals = 0, investments = 0, liabilities = 0, wealth = 0 } = amounts
+  return { assets: cash + metals + investments + wealth, liabilities }
+}
+
+/**
+ * Estimates the zakat owed on a person's wealth. The product supplies the
+ * nisab and the rate; the maths lives in `calculateZakat`, which is exported
+ * on its own for use outside the component.
+ */
 export function ZakatCalculator({
   nisab,
   currency,
@@ -100,6 +115,7 @@ export function ZakatCalculator({
   variant = 'detailed',
   locale = 'en-AE',
   labels: labelOverrides,
+  defaultValues,
   onCalculate,
   onPay,
   className,
@@ -108,15 +124,27 @@ export function ZakatCalculator({
   const fields = fieldsByVariant[variant]
   const titleId = useId()
 
-  const [values, setValues] = useState(emptyValues)
-  const [errors, setErrors] = useState<Partial<Record<FieldName, string>>>({})
-  const [result, setResult] = useState<ZakatResult | null>(null)
-  const inputs = useRef<Partial<Record<FieldName, HTMLInputElement | null>>>({})
+  const [values, setValues] = useState(() => {
+    const digits = minorUnitDigits(currency)
+    const initial = { ...emptyValues }
+    for (const field of fields) {
+      const amount = defaultValues?.[field]
+      if (amount) initial[field] = (amount / 10 ** digits).toFixed(digits)
+    }
+    return initial
+  })
+  const [errors, setErrors] = useState<Partial<Record<ZakatField, string>>>({})
+  const [result, setResult] = useState<ZakatResult | null>(() => {
+    const prefilled = Object.fromEntries(fields.map((field) => [field, defaultValues?.[field] ?? 0]))
+    const { assets, liabilities } = totals(prefilled)
+    return assets > 0 ? calculateZakat({ assets, liabilities, nisab, rate }) : null
+  })
+  const inputs = useRef<Partial<Record<ZakatField, HTMLInputElement | null>>>({})
 
   const money = (amount: number) => formatMoney(amount, currency, { locale })
-  const hints: Partial<Record<FieldName, string>> = { liabilities: labels.liabilitiesHint, wealth: labels.wealthHint }
+  const hints: Partial<Record<ZakatField, string>> = { liabilities: labels.liabilitiesHint, wealth: labels.wealthHint }
 
-  function handleChange(field: FieldName, value: string) {
+  function handleChange(field: ZakatField, value: string) {
     setValues((current) => ({ ...current, [field]: value }))
     setErrors((current) => ({ ...current, [field]: undefined }))
     // A result must always match the inputs on screen, so editing clears it.
@@ -126,8 +154,8 @@ export function ZakatCalculator({
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    const amounts: Partial<Record<FieldName, number>> = {}
-    const nextErrors: Partial<Record<FieldName, string>> = {}
+    const amounts: Partial<Record<ZakatField, number>> = {}
+    const nextErrors: Partial<Record<ZakatField, string>> = {}
     for (const field of fields) {
       const amount = parseMoney(values[field], currency)
       if (amount === null) nextErrors[field] = labels.invalidAmount
@@ -143,8 +171,7 @@ export function ZakatCalculator({
       return
     }
 
-    const { cash = 0, metals = 0, investments = 0, liabilities = 0, wealth = 0 } = amounts
-    const next = calculateZakat({ assets: cash + metals + investments + wealth, liabilities, nisab, rate })
+    const next = calculateZakat({ ...totals(amounts), nisab, rate })
     setResult(next)
     onCalculate?.(next)
   }

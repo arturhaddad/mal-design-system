@@ -45,10 +45,22 @@ export const Quick: Story = {
 }
 
 /**
- * Wealth above the nisab. The result is announced through `role="status"`, and
- * `onPay` adds a payment action to it.
+ * `defaultValues` prefills the fields, for example from the customer's
+ * balances, and the calculator opens with its result. `onPay` adds a payment
+ * action to the result.
  */
-export const ZakatDue: Story = {
+export const Prefilled: Story = {
+  args: {
+    onPay: fn(),
+    defaultValues: { cash: 95_000_00, metals: 20_000_50, investments: 15_000_00, liabilities: 10_000_00 },
+  },
+}
+
+/**
+ * Typing amounts and submitting. The result is announced through
+ * `role="status"` without moving focus.
+ */
+export const CalculatesOnSubmit: Story = {
   args: { onPay: fn() },
   play: async ({ args, canvasElement }) => {
     const canvas = within(canvasElement)
@@ -71,7 +83,7 @@ export const ZakatDue: Story = {
 }
 
 export const DarkTheme: Story = {
-  ...ZakatDue,
+  ...Prefilled,
   globals: { theme: 'dark' },
 }
 
@@ -117,6 +129,7 @@ export const Arabic: Story = {
   args: {
     locale: 'ar-AE',
     onPay: fn(),
+    defaultValues: { cash: 95_000_00, investments: 15_000_00 },
     labels: {
       title: 'حاسبة الزكاة',
       description: 'احسب زكاة مالك الذي حال عليه الحول.',
@@ -142,9 +155,11 @@ export const Arabic: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
 
-    await userEvent.type(canvas.getByRole('textbox', { name: 'النقد والأرصدة المصرفية' }), '١٢٠٠٠٠')
+    // Arabic-Indic digits and the Arabic decimal separator are valid input.
+    await userEvent.type(canvas.getByRole('textbox', { name: 'الذهب والفضة' }), '١٠٠٠٠٫٥٠')
     await userEvent.click(canvas.getByRole('button', { name: 'احسب الزكاة' }))
 
-    await expect(canvas.getByRole('status')).toHaveTextContent('3,000.00')
+    // 2.5% of (95,000 + 10,000.50 + 15,000)
+    await expect(canvas.getByRole('status')).toHaveTextContent('3,000.01')
   },
 }
