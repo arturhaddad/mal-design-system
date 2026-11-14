@@ -1,0 +1,12 @@
+/*
+ * Font files for the two families the tokens name.
+ *
+ * Kept apart from styles.css on purpose: a product may already load Inter its
+ * own way (next/font, a CDN, the system font). Each file is split by
+ * unicode-range, so the Arabic face is only downloaded on pages that use it.
+ */
+@import '@fontsource-variable/inter/index.css';
+@import '@fontsource/ibm-plex-sans-arabic/400.css';
+@import '@fontsource/ibm-plex-sans-arabic/500.css';
+@import '@fontsource/ibm-plex-sans-arabic/600.css';
+@import '@fontsource/ibm-plex-sans-arabic/700.css';
