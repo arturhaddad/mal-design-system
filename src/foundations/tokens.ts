@@ -12,7 +12,7 @@ export interface Token {
   dark: string
 }
 
-const DARK_SELECTOR = /\[data-theme=["']dark["']\]/
+const DARK_SELECTOR = /\[data-theme=["']?dark["']?\]/
 
 /** Every token whose name starts with `prefix`, in source order. */
 export function readTokens(prefix: string): Token[] {

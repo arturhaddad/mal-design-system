@@ -35,6 +35,22 @@ export const DarkTheme: Story = {
   globals: { theme: 'dark' },
 }
 
+/** Arabic copy, right to left. The icon stays at the start of the text. Copy is illustrative. */
+export const Arabic: Story = {
+  globals: { direction: 'rtl' },
+  render: () => (
+    <div className="flex flex-wrap items-center gap-2">
+      <Badge tone="brand" icon={<KhatamIcon size={14} />}>
+        متوافق مع الشريعة
+      </Badge>
+      <Badge tone="warning" icon={<ClockIcon size={14} />}>
+        قيد المعالجة
+      </Badge>
+      <Badge tone="danger">فشلت</Badge>
+    </div>
+  ),
+}
+
 /** A Sharia-compliance indicator is a badge with the khatam icon, not a separate component. */
 export const ShariaCompliant: Story = {
   args: {
