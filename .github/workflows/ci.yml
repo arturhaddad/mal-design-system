@@ -42,3 +42,6 @@ jobs:
 
       - name: Build Storybook
         run: pnpm build
+
+      - name: Smoke test (every page of the built Storybook renders)
+        run: pnpm test:build

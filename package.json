@@ -14,7 +14,8 @@
     "typecheck": "tsc -b",
     "lint": "oxlint",
     "test": "vitest run --project unit",
-    "test:stories": "vitest run --project storybook"
+    "test:stories": "vitest run --project storybook",
+    "test:build": "node scripts/smoke-build.mjs"
   },
   "peerDependencies": {
     "react": "^19.0.0",

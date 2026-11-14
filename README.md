@@ -14,8 +14,9 @@ nvm use                 # Node 24
 pnpm install
 pnpm dev                # Storybook on http://localhost:6006
 
-pnpm test               # unit tests: token contrast, money maths, zakat rules
+pnpm test               # unit tests: token contrast, conventions, money maths, zakat rules
 pnpm test:stories       # every story in Chromium, with axe accessibility checks
+pnpm build && pnpm test:build   # every page of the production build renders
 pnpm lint && pnpm typecheck
 ```
 
@@ -32,6 +33,7 @@ src/
   lib/           cx (class names) and money (minor units, formatting, parsing)
   styles.css     the one stylesheet a product imports
   index.ts       the public API
+scripts/         the smoke test for the built Storybook
 ```
 
 Tokens come in two tiers. **Primitives** (`--mal-emerald-400`) are raw values that generate no utility class. **Semantic tokens** (`--background-color-action`) point at primitives, have a light and a dark value, and generate the utilities components use (`bg-action`). Tailwind's default palette is switched off, so the semantic tokens are the only colours, text styles and radii available.
