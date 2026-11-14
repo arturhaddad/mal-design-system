@@ -36,3 +36,4 @@ storybook-static
 # Vitest
 __screenshots__
 coverage
+.env*

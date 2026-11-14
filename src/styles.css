@@ -1,1 +1,8 @@
+/*
+ * The system's stylesheet: Tailwind, then the two token tiers, then base styles.
+ * Products import this one file.
+ */
 @import 'tailwindcss';
+@import './tokens/primitives.css';
+@import './tokens/semantic.css';
+@import './tokens/base.css';

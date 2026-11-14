@@ -1,0 +1,36 @@
+/*
+ * Element defaults that every surface of the system relies on.
+ */
+@layer base {
+  :root {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: var(--background-color-canvas);
+    color: var(--text-color-default);
+  }
+}
+
+/*
+ * Arabic is a joined script: tracking pulls its letters apart. The text styles
+ * carry negative tracking for Latin headings, so it is reset for Arabic here,
+ * outside any layer, where it wins over the utilities.
+ */
+:lang(ar) {
+  letter-spacing: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

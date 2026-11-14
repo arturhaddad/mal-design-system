@@ -1,0 +1,59 @@
+/*
+ * Tier 1: primitives.
+ *
+ * Raw values with no meaning attached. Components never read these directly:
+ * they are deliberately kept out of `@theme`, so Tailwind generates no utility
+ * for them (`bg-mal-emerald-400` does not exist). The only consumers are the
+ * semantic tokens in semantic.css.
+ */
+:root {
+  /* Emerald: the brand hue. 400 is Mal's green, 800 and 950 its two deep greens. */
+  --mal-emerald-50: #ecfdf3;
+  --mal-emerald-100: #d3f9e1;
+  --mal-emerald-200: #a9f2c5;
+  --mal-emerald-300: #5de79a;
+  --mal-emerald-400: #2bd673;
+  --mal-emerald-500: #1dc264;
+  --mal-emerald-600: #13a853;
+  --mal-emerald-700: #0b763a;
+  --mal-emerald-800: #0f5a2d;
+  --mal-emerald-900: #073f25;
+  --mal-emerald-950: #002a1d;
+
+  /* Ink: neutrals with a trace of the brand's teal, from white to Mal's near-black. */
+  --mal-ink-0: #ffffff;
+  --mal-ink-50: #f5f7f7;
+  --mal-ink-100: #eceff0;
+  --mal-ink-200: #dce1e1;
+  --mal-ink-300: #c2cacb;
+  --mal-ink-400: #98a3a4;
+  --mal-ink-500: #808b8d;
+  --mal-ink-600: #5a6668;
+  --mal-ink-700: #3a4547;
+  --mal-ink-800: #222b2d;
+  --mal-ink-900: #0e171a;
+  --mal-ink-950: #020b0e;
+
+  /* Status hues. Only the steps a semantic token uses exist. */
+  --mal-red-50: #fef3f2;
+  --mal-red-300: #fda29b;
+  --mal-red-400: #f97066;
+  --mal-red-600: #d92d20;
+  --mal-red-700: #b42318;
+  --mal-red-950: #2a0b06;
+
+  --mal-amber-50: #fffaeb;
+  --mal-amber-300: #fec84b;
+  --mal-amber-700: #b54708;
+  --mal-amber-950: #2b1005;
+
+  /* Radius */
+  --mal-radius-sm: 0.5rem;
+  --mal-radius-md: 0.75rem;
+  --mal-radius-lg: 1.25rem;
+  --mal-radius-full: 9999px;
+
+  /* Type families. Inter has no Arabic glyphs, so Arabic falls through to Plex. */
+  --mal-font-latin: 'Inter Variable', 'Inter';
+  --mal-font-arabic: 'IBM Plex Sans Arabic';
+}
