@@ -8,9 +8,18 @@
 
 type Rgb = readonly [number, number, number]
 
-/** Parses `#rrggbb` or the `rgb(r, g, b)` form returned by `getComputedStyle`. */
+/** `#fff` becomes `#ffffff`. Anything else is returned as it came. */
+export function longHex(value: string): string {
+  const short = /^#([0-9a-f])([0-9a-f])([0-9a-f])$/i.exec(value.trim())
+  return short ? `#${short[1]}${short[1]}${short[2]}${short[2]}${short[3]}${short[3]}`.toLowerCase() : value
+}
+
+/**
+ * Parses `#rrggbb`, the `#rgb` a minifier shortens it to, or the
+ * `rgb(r, g, b)` form returned by `getComputedStyle`.
+ */
 export function parseColor(value: string): Rgb {
-  const hex = /^#([0-9a-f]{6})$/i.exec(value.trim())
+  const hex = /^#([0-9a-f]{6})$/i.exec(longHex(value).trim())
   if (hex) {
     const int = Number.parseInt(hex[1], 16)
     return [(int >> 16) & 255, (int >> 8) & 255, int & 255]

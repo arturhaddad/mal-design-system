@@ -2,6 +2,7 @@
  * Reads the token values straight from the loaded stylesheets, so the
  * Foundations pages can never drift from the CSS they document.
  */
+import { longHex } from '../tokens/contrast'
 
 export interface Token {
   /** The CSS variable, e.g. `--background-color-canvas`. */
@@ -25,7 +26,8 @@ export function readTokens(prefix: string): Token[] {
         const target = DARK_SELECTOR.test(rule.selectorText) ? dark : rule.selectorText.includes(':root') ? light : null
         if (!target) continue
         for (const property of rule.style) {
-          if (property.startsWith(prefix)) target.set(property, rule.style.getPropertyValue(property).trim())
+          // A production build shortens #ffffff to #fff. The pages always show six digits.
+          if (property.startsWith(prefix)) target.set(property, longHex(rule.style.getPropertyValue(property).trim()))
         }
       } else if ('cssRules' in rule) {
         visit((rule as CSSGroupingRule).cssRules)
@@ -53,7 +55,7 @@ export function primitiveName(value: string): string {
 export function resolveValue(value: string): string {
   const reference = /var\((--[\w-]+)\)/.exec(value)
   if (!reference) return value
-  return getComputedStyle(document.documentElement).getPropertyValue(reference[1]).trim()
+  return longHex(getComputedStyle(document.documentElement).getPropertyValue(reference[1]).trim())
 }
 
 const UTILITY_PREFIX: Record<string, string> = {

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 
 import { describe, expect, it } from 'vitest'
 
-import { contrastPairs, contrastRatio } from './contrast'
+import { contrastPairs, contrastRatio, longHex } from './contrast'
 
 const read = (file: string) => readFileSync(new URL(file, import.meta.url), 'utf8')
 
@@ -38,6 +38,21 @@ function resolve(theme: Record<string, string>, token: string): string {
   if (!primitive) throw new Error(`${token} points at ${reference[1]}, which is not a primitive`)
   return primitive
 }
+
+describe('contrastRatio', () => {
+  it('reads every colour format a build can hand it', () => {
+    // The production build minifies #ffffff to #fff, and the Colour page reads the built CSS.
+    expect(contrastRatio('#fff', '#000')).toBeCloseTo(21)
+    expect(contrastRatio('#FFFFFF', 'rgb(0, 0, 0)')).toBeCloseTo(21)
+    expect(contrastRatio('#fff', '#ffffff')).toBe(1)
+    expect(longHex('#0aF')).toBe('#00aaff')
+    expect(longHex('#0b763a')).toBe('#0b763a')
+  })
+
+  it('refuses a format it cannot read, instead of guessing', () => {
+    expect(() => contrastRatio('rebeccapurple', '#fff')).toThrow('Unsupported colour format')
+  })
+})
 
 describe('semantic colour tokens', () => {
   const lightColours = Object.keys(light).filter(isColour)
