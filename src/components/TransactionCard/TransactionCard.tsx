@@ -95,13 +95,17 @@ export function TransactionCard({
   const when = new Date(date)
 
   const formattedAmount = formatMoney(isIncoming ? amount : -amount, currency, { locale, signDisplay: 'exceptZero' })
-  const formattedDate = new Intl.DateTimeFormat(locale, {
-    day: 'numeric',
-    month: 'short',
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZone,
-  }).format(when)
+  // Data comes from an API. A date that cannot be parsed drops the timestamp instead of crashing the list.
+  const hasValidDate = !Number.isNaN(when.getTime())
+  const formattedDate = hasValidDate
+    ? new Intl.DateTimeFormat(locale, {
+        day: 'numeric',
+        month: 'short',
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZone,
+      }).format(when)
+    : null
 
   // Only phrasing elements below: the same markup has to be valid inside <a> and <button>.
   const content = (
@@ -143,9 +147,11 @@ export function TransactionCard({
           {/* <bdi> keeps sign, digits and currency in order inside right-to-left text. */}
           <bdi>{formattedAmount}</bdi>
         </span>
-        <time dateTime={when.toISOString()} className="text-body-sm text-muted">
-          {formattedDate}
-        </time>
+        {hasValidDate && (
+          <time dateTime={when.toISOString()} className="text-body-sm text-muted">
+            {formattedDate}
+          </time>
+        )}
       </span>
     </>
   )

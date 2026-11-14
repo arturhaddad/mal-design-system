@@ -34,6 +34,8 @@ describe('parseMoney', () => {
     expect(parseMoney('1250', 'AED')).toBe(1_250_00)
     expect(parseMoney('1,250.5', 'AED')).toBe(1_250_50)
     expect(parseMoney(' 0.07 ', 'AED')).toBe(7)
+    expect(parseMoney('.5', 'AED')).toBe(50)
+    expect(parseMoney('12.', 'AED')).toBe(12_00)
   })
 
   it('reads Arabic-Indic digits and separators', () => {
@@ -49,6 +51,7 @@ describe('parseMoney', () => {
     expect(parseMoney('abc', 'AED')).toBeNull()
     expect(parseMoney('-5', 'AED')).toBeNull()
     expect(parseMoney('1.2.3', 'AED')).toBeNull()
+    expect(parseMoney('.', 'AED')).toBeNull()
   })
 
   it('rejects more decimals than the currency has', () => {

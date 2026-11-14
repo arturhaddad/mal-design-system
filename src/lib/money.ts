@@ -63,10 +63,12 @@ export function parseMoney(input: string, currency: string): number | null {
   if (normalised === '') return 0
 
   const digits = minorUnitDigits(currency)
-  const match = /^(\d+)(?:\.(\d*))?$/.exec(normalised)
+  // Digits on at least one side of the separator: "12", "12.", "12.5" and ".5" are all amounts.
+  const match = /^(\d*)(?:\.(\d*))?$/.exec(normalised)
   if (!match) return null
 
   const [, whole, fraction = ''] = match
+  if (whole === '' && fraction === '') return null
   if (fraction.length > digits) return null
 
   const minor = Number(whole) * 10 ** digits + Number(fraction.padEnd(digits, '0') || 0)
