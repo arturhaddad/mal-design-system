@@ -109,17 +109,29 @@ function totals(amounts: Partial<Record<ZakatField, number>>) {
  * on its own for use outside the component.
  */
 export function ZakatCalculator({
+  variant = 'detailed',
+  rate = DEFAULT_ZAKAT_RATE,
+  locale = 'en-AE',
+  ...props
+}: ZakatCalculatorProps) {
+  // Amounts typed for one variant or currency mean nothing in another, so changing either starts the form again.
+  return <ZakatForm key={`${variant}:${props.currency}`} variant={variant} rate={rate} locale={locale} {...props} />
+}
+
+type ZakatFormProps = ZakatCalculatorProps & Required<Pick<ZakatCalculatorProps, 'variant' | 'rate' | 'locale'>>
+
+function ZakatForm({
   nisab,
   currency,
-  rate = DEFAULT_ZAKAT_RATE,
-  variant = 'detailed',
-  locale = 'en-AE',
+  rate,
+  variant,
+  locale,
   labels: labelOverrides,
   defaultValues,
   onCalculate,
   onPay,
   className,
-}: ZakatCalculatorProps) {
+}: ZakatFormProps) {
   const labels = { ...defaultLabels, ...labelOverrides }
   const fields = fieldsByVariant[variant]
   const titleId = useId()
@@ -134,11 +146,13 @@ export function ZakatCalculator({
     return initial
   })
   const [errors, setErrors] = useState<Partial<Record<ZakatField, string>>>({})
-  const [result, setResult] = useState<ZakatResult | null>(() => {
+  // The amounts last submitted. The result is worked out from them on every
+  // render, so it follows the nisab and the rate when the product changes them.
+  const [submitted, setSubmitted] = useState<Partial<Record<ZakatField, number>> | null>(() => {
     const prefilled = Object.fromEntries(fields.map((field) => [field, defaultValues?.[field] ?? 0]))
-    const { assets, liabilities } = totals(prefilled)
-    return assets > 0 ? calculateZakat({ assets, liabilities, nisab, rate }) : null
+    return totals(prefilled).assets > 0 ? prefilled : null
   })
+  const result: ZakatResult | null = submitted ? calculateZakat({ ...totals(submitted), nisab, rate }) : null
   const inputs = useRef<Partial<Record<ZakatField, HTMLInputElement | null>>>({})
 
   const money = (amount: number) => formatMoney(amount, currency, { locale })
@@ -148,7 +162,7 @@ export function ZakatCalculator({
     setValues((current) => ({ ...current, [field]: value }))
     setErrors((current) => ({ ...current, [field]: undefined }))
     // A result must always match the inputs on screen, so editing clears it.
-    setResult(null)
+    setSubmitted(null)
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -165,21 +179,20 @@ export function ZakatCalculator({
 
     const firstInvalid = fields.find((field) => nextErrors[field])
     if (firstInvalid) {
-      setResult(null)
+      setSubmitted(null)
       // Send keyboard and screen reader users straight to the problem.
       inputs.current[firstInvalid]?.focus()
       return
     }
 
-    const next = calculateZakat({ ...totals(amounts), nisab, rate })
-    setResult(next)
-    onCalculate?.(next)
+    setSubmitted(amounts)
+    onCalculate?.(calculateZakat({ ...totals(amounts), nisab, rate }))
   }
 
   function handleReset() {
     setValues(emptyValues)
     setErrors({})
-    setResult(null)
+    setSubmitted(null)
     inputs.current[fields[0]]?.focus()
   }
 

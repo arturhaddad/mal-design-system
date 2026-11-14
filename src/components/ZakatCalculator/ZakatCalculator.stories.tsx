@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { useState } from 'react'
 import { expect, fn, userEvent, within } from 'storybook/test'
 
+import { Button } from '../Button'
 import { ZakatCalculator } from './ZakatCalculator'
 
 const meta = {
@@ -79,6 +81,49 @@ export const CalculatesOnSubmit: Story = {
 
     await userEvent.click(canvas.getByRole('button', { name: /^Pay AED/ }))
     await expect(args.onPay).toHaveBeenCalledOnce()
+  },
+}
+
+/**
+ * The nisab is a prop, so the product chooses the standard and the price
+ * behind it. Two buttons here switch between example silver and gold
+ * thresholds, and the result follows without a new calculation.
+ */
+export const NisabStandard: Story = {
+  args: { defaultValues: { cash: 30_000_00 } },
+  render: function Render(args) {
+    const [standard, setStandard] = useState<'silver' | 'gold'>('silver')
+
+    return (
+      <div className="grid gap-4">
+        <fieldset className="flex gap-2">
+          <legend className="sr-only">Nisab standard</legend>
+          {(['silver', 'gold'] as const).map((option) => (
+            <Button
+              key={option}
+              size="sm"
+              variant={standard === option ? 'primary' : 'secondary'}
+              aria-pressed={standard === option}
+              onClick={() => setStandard(option)}
+            >
+              {option === 'silver' ? 'Silver nisab' : 'Gold nisab'}
+            </Button>
+          ))}
+        </fieldset>
+        {/* Example figures, not today's prices. */}
+        <ZakatCalculator {...args} nisab={standard === 'silver' ? 2_500_00 : 40_000_00} />
+      </div>
+    )
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+
+    // 2.5% of 30,000 is due against the silver threshold.
+    await expect(canvas.getByRole('status')).toHaveTextContent('AED 750.00')
+
+    // Nothing is due against the higher gold threshold, and nobody pressed "Calculate" again.
+    await userEvent.click(canvas.getByRole('button', { name: 'Gold nisab' }))
+    await expect(canvas.getByRole('status')).toHaveTextContent('No zakat due')
   },
 }
 
