@@ -1,0 +1,36 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Introduction" />
+
+# Mal Design System
+
+A starter design system for Mal's web products: a token layer, five accessible React components, and the conventions for adding more.
+
+> A take-home assessment by Artur Haddad for the Web Product Engineer role. This is not an official Mal product. Colours and typeface are read from mal.ai; everything else is my interpretation.
+
+## How to look around
+
+- **Theme and Direction** are two switches in the toolbar above every story. Flip any component to the dark theme or to right-to-left.
+- **Arabic** is a story on every component, with right-to-left copy and `ar-AE` number formatting.
+- **Accessibility** is a panel under each story. It lists the axe checks the story passes. The same checks run in the test suite, where a violation fails the build.
+- **Interactions** is the panel next to it. It replays the keyboard and screen reader assertions step by step.
+
+## What is here
+
+| Section | Contents |
+| --- | --- |
+| Foundations | Colour, typography, spacing and radius tokens, read live from the CSS |
+| Components | Button, InputField, TransactionCard, ZakatCalculator, Badge |
+| Getting started | How to run the project and how to add a component |
+
+## Five rules the system is built on
+
+1. **Tokens are the whole vocabulary.** Tailwind's default palette is switched off. The only colour, type and radius utilities that exist are the ones generated from the system's tokens.
+2. **A token only works where it makes sense.** Colour tokens are scoped to a CSS property: `bg-surface` exists, `text-surface` does not.
+3. **Components contain no theme logic.** The dark theme redefines the semantic tokens. No component has a `dark:` class.
+4. **Layout follows the reading direction.** Components use logical properties and `start`/`end` props, so Arabic needs no extra code.
+5. **Accessibility is enforced, not reviewed.** Contrast is a unit-tested contract between tokens, and every story is an axe test.
+
+## Links
+
+- [Source on GitHub](https://github.com/arturhaddad/mal-design-system)
