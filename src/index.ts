@@ -1,7 +1,8 @@
 /**
  * Public API of the Mal design system.
  *
- * Styles ship separately: import `mal-design-system/styles.css` once per app.
+ * Styles are separate: `styles.css`, next to this file, holds the tokens and
+ * is loaded once per app.
  */
 export * from './components/Badge'
 export * from './components/Button'

@@ -87,8 +87,8 @@ Most of this list is enforced. `pnpm test` fails on a raw colour, a `dark:` clas
 
 ## Why Tailwind CSS v4
 
-- **The token file is the configuration.** v4 reads its theme from CSS variables. The same variables are there for anything that is not React: an email, a marketing page, a chart.
-- **No runtime.** Styles are static CSS. Nothing is injected at render time, so the components work in React Server Components and add no script to pages where load time matters most, such as onboarding.
+- **The token file is the configuration.** v4 reads its theme from CSS variables. The same variables are there for anything that is not React, such as a marketing page or a chart.
+- **No runtime.** Styles are static CSS. Nothing is injected at render time, so styling never forces a component onto the client or adds script to the pages where load time matters most, such as onboarding.
 - **Theming without code.** The dark theme, and a dark panel inside a light page, are variable overrides under `[data-theme]`. Components do not know about them.
 - **The system can be closed.** With the default palette removed, `bg-emerald-500` produces no CSS, and a test rejects arbitrary values such as `bg-[#0b763a]`.
 - **Direction is built in.** Logical utilities (`ps-4`, `text-start`) make right-to-left the default behaviour, not a second stylesheet.
@@ -97,4 +97,4 @@ The cost is long class strings, and variants kept by hand in lookup objects. CSS
 
 ## Not here yet
 
-This is a starter, scoped to two days. It is not published as a package, has no visual regression tests, and its Arabic copy has not been through localisation review.
+This is a starter, scoped to two days. It is not published as a package: there is no library build, no `exports` map and no `'use client'` boundary on the interactive components. It has no visual regression tests, and its Arabic copy has not been through localisation review.
