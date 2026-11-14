@@ -120,7 +120,8 @@ export function TransactionCard({
       </span>
 
       <span className="flex min-w-0 flex-1 flex-col text-start">
-        <span className="flex items-center gap-2">
+        {/* In a narrow card the badge wraps under the title, so the name is the last thing to truncate. */}
+        <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
           <span className="truncate text-label text-default">{title}</span>
           {status === 'pending' && (
             <Badge tone="warning" icon={<ClockIcon size={14} />}>
@@ -156,7 +157,8 @@ export function TransactionCard({
     </>
   )
 
-  const layout = cx('flex w-full items-center gap-3', variants[variant])
+  // min-w-0 lets the card shrink inside a grid or flex parent, where the default minimum is its content.
+  const layout = cx('flex w-full min-w-0 items-center gap-3', variants[variant])
   const focusable = cx(
     layout,
     interactive[variant],

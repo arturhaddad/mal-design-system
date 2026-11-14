@@ -148,7 +148,8 @@ export const Arabic: Story = {
       notDueTitle: 'لا زكاة عليك',
       notDueDetail: ({ wealth, nisab }) => `مالك الخاضع للزكاة (${wealth}) أقل من النصاب (${nisab}).`,
       pay: (amount) => `ادفع ${amount}`,
-      nisab: (amount) => `النصاب: ${amount}.`,
+      // No full stop: the dirham symbol (د.إ.) already ends with one.
+      nisab: (amount) => `النصاب: ${amount}`,
       disclaimer: 'هذا تقدير وليس فتوى شرعية.',
     },
   },

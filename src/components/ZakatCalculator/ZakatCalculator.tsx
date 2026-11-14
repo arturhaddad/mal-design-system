@@ -238,7 +238,8 @@ export function ZakatCalculator({
           >
             <KhatamPattern className="-z-10 text-on-brand-strong-muted opacity-10" />
             <p className="text-label text-on-brand-strong-muted">{labels.dueTitle}</p>
-            <p className="mt-1 text-display tabular-nums">
+            {/* Steps down on a phone, and wraps before it would ever clip: an amount must stay whole on screen. */}
+            <p className="mt-1 text-title wrap-anywhere tabular-nums sm:text-display">
               <bdi>{money(result.zakatDue)}</bdi>
             </p>
             <p className="mt-1 text-body-sm text-on-brand-strong-muted">
