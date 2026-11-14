@@ -43,7 +43,7 @@ Tokens come in two tiers. **Primitives** (`--mal-emerald-400`) are raw values th
 2. **Create the folder.** `src/components/Tooltip/` with `Tooltip.tsx`, `Tooltip.stories.tsx` and `index.ts`. `Badge` is the smallest example to copy.
 
 3. **Design the props before the markup.**
-   - Extend the native element (`ComponentProps<'button'>`) and spread the rest onto it, so `aria-*`, `data-*` and `ref` work without being declared.
+   - A component that wraps one native element extends its props (`ComponentProps<'button'>`) and spreads the rest onto it, so `aria-*`, `data-*` and `ref` work without being declared. A composite such as `TransactionCard` lists its props and takes `className` for layout.
    - A visual option is a string union named `variant`, `size` or `tone`. Never a boolean such as `isDanger`.
    - Positions are `start` and `end`, never `left` and `right`.
    - No built-in copy. Take strings as props, or as a `labels` object with English defaults.
@@ -74,12 +74,24 @@ A component is done when:
 - [ ] it uses no raw colour, no `dark:` class and no left/right utility
 - [ ] every string it renders can be translated
 
+Most of this list is enforced. `pnpm test` fails on a raw colour, a `dark:` class or a left/right utility, and on a component with no `DarkTheme` or `Arabic` story. `pnpm test:stories` fails on an axe violation. Review is left with the questions a machine cannot answer: is the API right, and does it belong here.
+
 ## Adding a token
 
 1. If the value is new, add a primitive to `src/tokens/primitives.css`.
 2. Add the semantic token to `src/tokens/semantic.css`: the light value inside `@theme static`, the dark value under `[data-theme='dark']`. A test fails if either is missing.
 3. If it is a text, border or focus colour, list the backgrounds it may sit on in `src/tokens/contrast.ts`.
 4. Run `pnpm test`. It checks every listed pair against WCAG 2.2 in both themes.
+
+## Why Tailwind CSS v4
+
+- **The token file is the configuration.** v4 reads its theme from CSS variables. The same variables are there for anything that is not React: an email, a marketing page, a chart.
+- **No runtime.** Styles are static CSS. Nothing is injected at render time, so the components work in React Server Components and add no script to pages where load time matters most, such as onboarding.
+- **Theming without code.** The dark theme, and a dark panel inside a light page, are variable overrides under `[data-theme]`. Components do not know about them.
+- **The system can be closed.** With the default palette removed, `bg-emerald-500` produces no CSS, and a test rejects arbitrary values such as `bg-[#0b763a]`.
+- **Direction is built in.** Logical utilities (`ps-4`, `text-start`) make right-to-left the default behaviour, not a second stylesheet.
+
+The cost is long class strings, and variants kept by hand in lookup objects. CSS-in-JS would have given typed variants and colocated styles, at the price of a runtime or a build-time extractor, and a theme object that only React can read.
 
 ## Not here yet
 
