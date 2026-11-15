@@ -33,14 +33,30 @@ type Story = StoryObj<typeof meta>
 
 export const Playground: Story = {}
 
-/** `card` stands on its own. `row` is borderless, for lists. */
+/**
+ * `card` brings its own border and surface, so it stands alone. `row` has neither:
+ * rows share the surface of the list they sit in, with a divider between them.
+ */
 export const Variants: Story = {
   render: (args) => (
     <div className="grid gap-6">
       <TransactionCard {...args} variant="card" />
-      <div className="rounded-card border border-default bg-surface px-2">
-        <TransactionCard {...args} variant="row" />
-      </div>
+      <ul className="divide-y divide-default rounded-card border border-default bg-surface px-2">
+        <li>
+          <TransactionCard {...args} variant="row" />
+        </li>
+        <li>
+          <TransactionCard
+            {...args}
+            variant="row"
+            title="Salary"
+            description="Noor Technologies"
+            amount={18_500_00}
+            direction="incoming"
+            date="2026-11-10T05:00:00Z"
+          />
+        </li>
+      </ul>
     </div>
   ),
 }
