@@ -1,6 +1,6 @@
 # Mal Design System
 
-A starter design system for Mal's web products: a token layer, five accessible React components and a Storybook playground.
+A starter design system for Mal's web products: a token layer, five accessible React components and a Storybook playground. Two of the components also have a React Native version.
 
 - **Playground:** https://mal-design-system-weld.vercel.app
 - **Stack:** React 19, TypeScript, Tailwind CSS v4, Storybook 10, Vitest
@@ -28,7 +28,9 @@ pnpm tokens:native      # after a token change: rebuild the React Native theme
 src/
   tokens/        primitives.css, semantic.css, the contrast contract with its test,
                  and native.ts, the same tokens generated for React Native
-  components/    one folder per component: Name.tsx, Name.stories.tsx, index.ts
+  components/    one folder per component: Name.tsx, Name.stories.tsx, index.ts,
+                 and for two of them Name.contract.ts and Name.native.tsx
+  native/        the React Native entry: theme provider, useTheme, the native exports
   foundations/   Storybook pages for the tokens, read from the CSS at runtime
   icons/         the few icons the components need
   lib/           cx (class names) and money (minor units, formatting, parsing)
@@ -87,7 +89,11 @@ Most of this list is enforced. `pnpm test` fails on a raw colour, a `dark:` clas
 4. Run `pnpm tokens:native`, so the React Native theme gets the token too.
 5. Run `pnpm test`. It checks every listed pair against WCAG 2.2 in both themes, and that the React Native theme still matches the CSS.
 
-## Tokens for React Native
+## React Native
+
+The system reaches a React Native app in two steps: the tokens, and then the components.
+
+### Tokens
 
 React Native cannot read CSS variables, so `src/tokens/native.ts` carries the same tokens as a typed object with a `light` and a `dark` theme.
 
@@ -100,37 +106,39 @@ The CSS stays the source. `pnpm tokens:native` reads the two token files and wri
 
 Shadows and motion are left out, because they do not map one to one. Fonts are named, not bundled: the app registers Inter and IBM Plex Sans Arabic and picks one per language, since React Native takes one family where CSS takes a fallback list.
 
-The medium primary `Button`, written against the theme:
+### Components
+
+`Button` and `TransactionCard` have a React Native version, in `Name.native.tsx` next to the web file. An app imports them from `src/native`:
 
 ```tsx
-import { Pressable, Text, useColorScheme } from 'react-native'
+import { View } from 'react-native'
 
-import { themes } from './tokens/native'
+import { Button, ThemeProvider, TransactionCard } from './src/native'
 
-export function Button({ label, onPress }: { label: string; onPress: () => void }) {
-  const theme = themes[useColorScheme() === 'dark' ? 'dark' : 'light']
-
+export function App() {
   return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      style={{
-        height: theme.control.md,
-        paddingHorizontal: theme.spacing * 5,
-        justifyContent: 'center',
-        borderRadius: theme.radius.pill,
-        backgroundColor: theme.background.action,
-      }}
-    >
-      <Text style={[theme.textStyle.label, { color: theme.text.onAction, fontFamily: theme.fontFamily.latin }]}>
-        {label}
-      </Text>
-    </Pressable>
+    <ThemeProvider theme="dark">
+      <View>
+        <TransactionCard title="Carrefour" amount={4250} currency="AED" direction="outgoing" date="2026-11-12T10:42:00Z" />
+        <Button variant="secondary" size="lg" onPress={() => {}}>
+          Send money
+        </Button>
+      </View>
+    </ThemeProvider>
   )
 }
 ```
 
-It reads the same tokens as the web component. It is a sketch: the theme is generated and tested here, but no React Native app consumes it yet.
+- **One contract.** `Name.contract.ts` declares the variants and the shared props once, and both versions extend it. A variant added there fails the type check until both platforms draw it.
+- **Two implementations.** The web version is HTML with Tailwind classes. The native version is `Pressable`, `View` and `Text`, styled from `useTheme()`. They share no styling code.
+- **The same words.** `formatTransaction` formats the amount and the date for both.
+- **The theme follows the device.** `ThemeProvider` fixes it, for an app with its own setting.
+
+In Storybook they sit under **React Native** and run in the browser through react-native-web. That is one alias in `vite.config.ts`, and only the React Native pages load it.
+
+They have not run on a phone or in a simulator, and this repository has no app. The browser shows their layout, colours and behaviour. It does not show a phone's fonts, keyboard, screen reader or right-to-left layout. The direction icon of the native `TransactionCard` is a text arrow, because the web icons are SVG and React Native needs a library to draw them.
+
+To give another component a native version, add `Name.contract.ts`, `Name.native.tsx` and `Name.native.stories.tsx`, and export it from `src/native/index.ts`. Once the native file exists, `pnpm test` fails until the rest does.
 
 ## Why Tailwind CSS v4
 
@@ -144,4 +152,4 @@ The cost is long class strings, and variants kept by hand in lookup objects. CSS
 
 ## Not here yet
 
-This is a starter, scoped to two days. It is not published as a package: there is no library build, no `exports` map and no `'use client'` boundary on the interactive components. It has no visual regression tests, and its Arabic copy has not been through localisation review. For React Native it ships tokens only: there are no native components and no native stories.
+This is a starter, scoped to two days. It is not published as a package: there is no library build, no `exports` map and no `'use client'` boundary on the interactive components. It has no visual regression tests, and its Arabic copy has not been through localisation review. The React Native side covers two of the five components and has only run in a browser: there is no app, no run on a device and no right-to-left story.
