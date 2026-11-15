@@ -2,7 +2,8 @@ import { useId, useRef, useState, type FormEvent } from 'react'
 
 import { KhatamPattern } from '../../icons/KhatamPattern'
 import { cx } from '../../lib/cx'
-import { currencySymbol, formatMoney, minorUnitDigits, parseMoney } from '../../lib/money'
+import { currencySymbol, formatAmountInput, formatMoney, parseMoney } from '../../lib/money'
+import { useAmountInput } from '../../lib/useAmountInput'
 import { Button } from '../Button'
 import { InputField } from '../InputField'
 import { calculateZakat, DEFAULT_ZAKAT_RATE, type ZakatResult } from './calculateZakat'
@@ -28,7 +29,6 @@ export interface ZakatCalculatorLabels {
   wealthHint: string
   calculate: string
   reset: string
-  invalidAmount: string
   dueTitle: string
   dueDetail: (values: { rate: string; wealth: string }) => string
   notDueTitle: string
@@ -81,7 +81,6 @@ const defaultLabels: ZakatCalculatorLabels = {
   wealthHint: 'Your assets minus the debts due now.',
   calculate: 'Calculate zakat',
   reset: 'Reset',
-  invalidAmount: 'Enter an amount using digits, for example 1250.50.',
   dueTitle: 'Zakat due',
   dueDetail: ({ rate, wealth }) => `${rate} of ${wealth} in zakatable wealth.`,
   notDueTitle: 'No zakat due',
@@ -137,15 +136,14 @@ function ZakatForm({
   const titleId = useId()
 
   const [values, setValues] = useState(() => {
-    const digits = minorUnitDigits(currency)
     const initial = { ...emptyValues }
     for (const field of fields) {
       const amount = defaultValues?.[field]
-      if (amount) initial[field] = (amount / 10 ** digits).toFixed(digits)
+      if (amount) initial[field] = formatAmountInput(amount, currency)
     }
     return initial
   })
-  const [errors, setErrors] = useState<Partial<Record<ZakatField, string>>>({})
+  const amountInput = useAmountInput()
   // The amounts last submitted. The result is worked out from them on every
   // render, so it follows the nisab and the rate when the product changes them.
   const [submitted, setSubmitted] = useState<Partial<Record<ZakatField, number>> | null>(() => {
@@ -160,30 +158,17 @@ function ZakatForm({
 
   function handleChange(field: ZakatField, value: string) {
     setValues((current) => ({ ...current, [field]: value }))
-    setErrors((current) => ({ ...current, [field]: undefined }))
-    // A result must always match the inputs on screen, so editing clears it.
-    setSubmitted(null)
+    // A result must always match the inputs on screen, so a new amount clears it.
+    // The same amount written another way ("5" completed to "5.00") does not.
+    if (parseMoney(value, currency) !== parseMoney(values[field], currency)) setSubmitted(null)
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
+    // The fields only let amounts through, so there is nothing to reject here. An empty field counts as zero.
     const amounts: Partial<Record<ZakatField, number>> = {}
-    const nextErrors: Partial<Record<ZakatField, string>> = {}
-    for (const field of fields) {
-      const amount = parseMoney(values[field], currency)
-      if (amount === null) nextErrors[field] = labels.invalidAmount
-      else amounts[field] = amount
-    }
-    setErrors(nextErrors)
-
-    const firstInvalid = fields.find((field) => nextErrors[field])
-    if (firstInvalid) {
-      setSubmitted(null)
-      // Send keyboard and screen reader users straight to the problem.
-      inputs.current[firstInvalid]?.focus()
-      return
-    }
+    for (const field of fields) amounts[field] = parseMoney(values[field], currency) ?? 0
 
     setSubmitted(amounts)
     onCalculate?.(calculateZakat({ ...totals(amounts), nisab, rate }))
@@ -191,7 +176,6 @@ function ZakatForm({
 
   function handleReset() {
     setValues(emptyValues)
-    setErrors({})
     setSubmitted(null)
     inputs.current[fields[0]]?.focus()
   }
@@ -216,15 +200,11 @@ function ZakatForm({
               }}
               label={labels[field]}
               description={hints[field]}
-              error={errors[field]}
               variant="filled"
               size={variant === 'quick' ? 'lg' : 'md'}
               startAdornment={currencySymbol(currency, locale)}
-              inputMode="decimal"
-              autoComplete="off"
-              placeholder="0.00"
               value={values[field]}
-              onChange={(event) => handleChange(field, event.target.value)}
+              {...amountInput(currency, (text) => handleChange(field, text))}
             />
           ))}
         </div>

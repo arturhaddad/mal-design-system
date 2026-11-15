@@ -1,7 +1,8 @@
-import { useId, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
+import { useId, useRef, useState, type FormEvent } from 'react'
 
 import { cx } from '../../lib/cx'
-import { formatAmountInput, formatMoney, maskAmount, parseMoney } from '../../lib/money'
+import { formatAmountInput, formatMoney, parseMoney } from '../../lib/money'
+import { useAmountInput } from '../../lib/useAmountInput'
 import { Badge } from '../Badge'
 import { Button } from '../Button'
 import { InputField } from '../InputField'
@@ -145,17 +146,7 @@ function QuoteForm({
   // An error waits until the person leaves the field. An empty field only counts once they try to continue.
   const [checked, setChecked] = useState<'no' | 'onBlur' | 'onContinue'>('no')
   const [announcement, setAnnouncement] = useState('')
-  // Where the caret belongs once the masked text is in the field.
-  const caret = useRef<{ side: Side; position: number } | null>(null)
-
-  // React leaves the caret at the end of a value it rewrites. This puts it back before the browser paints.
-  useLayoutEffect(() => {
-    if (!caret.current) return
-    const { side, position } = caret.current
-    caret.current = null
-    const input = inputs.current[side]
-    if (input && document.activeElement === input) input.setSelectionRange(position, position)
-  })
+  const amountInput = useAmountInput()
 
   const method = methods.find(({ id }) => id === methodId) ?? methods[0]
   const currencyOf: Record<Side, string> = { send: sourceCurrency, receive: targetCurrency }
@@ -206,30 +197,12 @@ function QuoteForm({
     )
   }
 
-  function handleChange(side: Side, input: HTMLInputElement) {
-    const masked = maskAmount(input.value, currencyOf[side], input.selectionStart ?? input.value.length)
-    caret.current = { side, position: masked.caret }
-    setTyped({ side, text: masked.text })
+  function handleChange(side: Side, text: string) {
+    setTyped({ side, text })
     setChecked('no')
   }
 
-  // A separator is not something the person typed, so deleting never stops at one. Backspace
-  // right after a separator steps over it and deletes the digit before, and Delete does the same forwards.
-  function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    const input = event.currentTarget
-    const { selectionStart: start, selectionEnd: end, value } = input
-    if (start === null || start !== end) return
-
-    if (event.key === 'Backspace' && value[start - 1] === ',') input.setSelectionRange(start - 1, start - 1)
-    if (event.key === 'Delete' && value[start] === ',') input.setSelectionRange(start + 1, start + 1)
-  }
-
-  function handleBlur(side: Side) {
-    // Leaving the field completes the decimals: "1,250" becomes "1,250.00".
-    if (side === typed.side && typed.text !== '') {
-      const amount = parseMoney(typed.text, currencyOf[side])
-      if (amount !== null) setTyped({ side, text: formatAmountInput(amount, currencyOf[side]) })
-    }
+  function handleBlur() {
     setChecked((current) => (current === 'onContinue' ? current : 'onBlur'))
     announce(quote, method)
   }
@@ -255,24 +228,28 @@ function QuoteForm({
     target: `${new Intl.NumberFormat(locale, { maximumFractionDigits: 4 }).format(rate)} ${targetCurrency}`,
   })
 
-  const field = (side: Side) => (
-    <InputField
-      ref={(element) => {
-        inputs.current[side] = element
-      }}
-      label={labels[side]}
-      error={side === typed.side ? error : undefined}
-      size="lg"
-      startAdornment={currencyOf[side]}
-      inputMode="decimal"
-      autoComplete="off"
-      placeholder={formatAmountInput(0, currencyOf[side])}
-      value={value(side)}
-      onChange={(event) => handleChange(side, event.target)}
-      onKeyDown={handleKeyDown}
-      onBlur={() => handleBlur(side)}
-    />
-  )
+  const field = (side: Side) => {
+    const amount = amountInput(currencyOf[side], (text) => handleChange(side, text))
+
+    return (
+      <InputField
+        ref={(element) => {
+          inputs.current[side] = element
+        }}
+        label={labels[side]}
+        error={side === typed.side ? error : undefined}
+        size="lg"
+        startAdornment={currencyOf[side]}
+        value={value(side)}
+        {...amount}
+        onBlur={(event) => {
+          // Completes the decimals first, so the check below sees the field as it will be shown.
+          amount.onBlur(event)
+          handleBlur()
+        }}
+      />
+    )
+  }
 
   return (
     <section

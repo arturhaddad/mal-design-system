@@ -146,22 +146,28 @@ export const BelowNisab: Story = {
 }
 
 /**
- * Submitting something that is not an amount shows the error on the field,
- * links it to the input and moves focus there.
+ * The amount fields behave like every amount field in the system: digits and
+ * one decimal point, thousands grouped while the person types, decimals
+ * completed when the field is left. Completing the decimals does not clear a
+ * result, because the amount has not changed.
  */
-export const InvalidAmount: Story = {
-  play: async ({ args, canvasElement }) => {
+export const Typing: Story = {
+  play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    const metals = canvas.getByRole('textbox', { name: 'Gold and silver' })
+    const cash = canvas.getByRole<HTMLInputElement>('textbox', { name: 'Cash and bank balances' })
+    const metals = canvas.getByRole<HTMLInputElement>('textbox', { name: 'Gold and silver' })
 
-    await userEvent.type(canvas.getByRole('textbox', { name: 'Cash and bank balances' }), '5000')
-    await userEvent.type(metals, 'about ten grand')
-    await userEvent.click(canvas.getByRole('button', { name: 'Calculate zakat' }))
+    await userEvent.type(metals, 'AED 20000.5x')
+    await expect(metals).toHaveValue('20,000.5')
 
-    await expect(metals).toHaveFocus()
-    await expect(metals).toHaveAttribute('aria-invalid', 'true')
-    await expect(metals).toHaveAccessibleDescription(/Enter an amount using digits/)
-    await expect(args.onCalculate).not.toHaveBeenCalled()
+    // Enter submits without leaving the field.
+    await userEvent.type(cash, '95000{Enter}')
+    await expect(canvas.getByRole('status')).toHaveTextContent('Zakat due')
+    await expect(metals).toHaveValue('20,000.50')
+
+    await userEvent.tab()
+    await expect(cash).toHaveValue('95,000.00')
+    await expect(canvas.getByRole('status')).toHaveTextContent('Zakat due')
   },
 }
 
@@ -188,7 +194,6 @@ export const Arabic: Story = {
       wealthHint: 'أصولك بعد خصم الديون المستحقة.',
       calculate: 'احسب الزكاة',
       reset: 'إعادة تعيين',
-      invalidAmount: 'أدخل مبلغًا بالأرقام، مثل 1250.50.',
       dueTitle: 'الزكاة المستحقة',
       dueDetail: ({ rate, wealth }) => `${rate} من ${wealth} من المال الخاضع للزكاة.`,
       notDueTitle: 'لا زكاة عليك',

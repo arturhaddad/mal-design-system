@@ -33,7 +33,8 @@ src/
   native/        the React Native entry: theme provider, useTheme, the native exports
   foundations/   Storybook pages for the tokens, read from the CSS at runtime
   icons/         the few icons the components need
-  lib/           cx (class names) and money (minor units, formatting, parsing)
+  lib/           cx (class names), money (minor units, formatting, parsing, the amount mask)
+                 and useAmountInput, the behaviour of every field that takes an amount
   styles.css     the one stylesheet a product imports
   index.ts       the public API
 scripts/         the smoke test for the built Storybook, and the React Native theme build
@@ -152,4 +153,4 @@ The cost is long class strings, and variants kept by hand in lookup objects. CSS
 
 ## Not here yet
 
-This is a starter, scoped to two days. It is not published as a package: there is no library build, no `exports` map and no `'use client'` boundary on the interactive components. It has no visual regression tests, and its Arabic copy has not been through localisation review. The rates, fees and delivery methods in the `TransferQuote` stories are examples, not Mal's prices or products. Its amount fields are typed the English way (`1,250.50`) in every locale, so a comma is never a decimal separator, and `ZakatCalculator` does not have the same mask yet. The React Native side covers two of the six components and has only run in a browser: there is no app, no run on a device and no right-to-left story.
+This is a starter, scoped to two days. It is not published as a package: there is no library build, no `exports` map and no `'use client'` boundary on the interactive components. It has no visual regression tests, and its Arabic copy has not been through localisation review. The rates, fees and delivery methods in the `TransferQuote` stories are examples, not Mal's prices or products. Amount fields are typed the English way (`1,250.50`) in every locale, so a comma is never a decimal separator. The React Native side covers two of the six components and has only run in a browser: there is no app, no run on a device and no right-to-left story.
