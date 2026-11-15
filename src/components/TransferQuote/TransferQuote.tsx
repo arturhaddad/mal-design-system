@@ -76,7 +76,7 @@ export interface TransferQuoteProps {
 }
 
 const defaultLabels: TransferQuoteLabels = {
-  title: 'Send money abroad',
+  title: 'Send money',
   send: 'You send',
   receive: 'Recipient gets',
   method: 'How it arrives',

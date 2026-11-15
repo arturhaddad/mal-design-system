@@ -3,21 +3,23 @@ import { expect, fn, userEvent, within } from 'storybook/test'
 
 import { TransferQuote, type TransferMethod } from './TransferQuote'
 
-// Examples for the stories. The rate, the fees and the methods are not Mal's prices or products.
+// Examples for the stories, not Mal's prices or products. The first two methods follow the ones
+// mal.ai describes (to a Mal user, and to a linked PKR account). The third is hypothetical: it is
+// here so that a method with a fee can be seen.
 const methods: [TransferMethod, ...TransferMethod[]] = [
-  { id: 'mal', label: 'Mal account', arrival: 'Instantly', fee: 0 },
-  { id: 'bank', label: 'Bank account', arrival: 'In minutes', fee: 0 },
-  { id: 'cash', label: 'Cash pickup', arrival: 'Within an hour', fee: 10_00 },
+  { id: 'mal', label: 'Mal recipient', arrival: 'Instantly', fee: 0 },
+  { id: 'linked', label: 'Linked PKR account', arrival: 'In minutes', fee: 0 },
+  { id: 'other', label: 'Other bank account', arrival: '1 to 3 business days', fee: 5_00 },
 ]
 
 const meta = {
   title: 'Components/TransferQuote',
   component: TransferQuote,
   args: {
-    sourceCurrency: 'AED',
+    sourceCurrency: 'USD',
     targetCurrency: 'PKR',
     // An example figure. In production the rate comes with the quote the product will honour.
-    rate: 76.25,
+    rate: 278.5,
     methods,
     onContinue: fn(),
   },
@@ -37,7 +39,10 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-/** Type either amount. The rate, the fees and the methods here are examples. */
+/**
+ * Type either amount. The rate and the fee are examples. The first two methods follow the ones
+ * mal.ai describes, and the third is hypothetical.
+ */
 export const Playground: Story = {
   args: { defaultSendAmount: 1_000_00 },
 }
@@ -76,19 +81,19 @@ export const EitherAmount: Story = {
     const receive = canvas.getByRole('textbox', { name: 'Recipient gets' })
 
     await userEvent.type(send, '1000')
-    await expect(receive).toHaveValue('76,250.00')
+    await expect(receive).toHaveValue('278,500.00')
     // What the person typed stays as they typed it.
     await expect(send).toHaveValue('1000')
 
     await userEvent.clear(receive)
     await userEvent.type(receive, '50000')
-    // 50,000 / 76.25 is 655.737…, rounded up so that 50,000 arrives.
-    await expect(send).toHaveValue('655.74')
+    // 50,000 / 278.5 is 179.533…, rounded up so that 50,000 arrives.
+    await expect(send).toHaveValue('179.54')
     await expect(receive).toHaveValue('50000')
 
     await userEvent.tab()
     await expect(canvas.getByRole('status')).toHaveTextContent(
-      'You send AED 655.74. Recipient gets PKR 50,000.00. Fee: Free. Arrives: Instantly.',
+      /You send \S{1,3}179\.54\. Recipient gets PKR 50,000\.00\. Fee: Free\. Arrives: Instantly\./,
     )
   },
 }
@@ -103,18 +108,18 @@ export const ChoosingAMethod: Story = {
     const canvas = within(canvasElement)
     const receive = canvas.getByRole('textbox', { name: 'Recipient gets' })
 
-    await expect(canvas.getByRole('radio', { name: /Mal account/ })).toBeChecked()
-    await expect(receive).toHaveValue('76,250.00')
+    await expect(canvas.getByRole('radio', { name: /Mal recipient/ })).toBeChecked()
+    await expect(receive).toHaveValue('278,500.00')
 
-    await userEvent.click(canvas.getByRole('radio', { name: /Cash pickup/ }))
-    // (1,000 − 10) × 76.25
-    await expect(receive).toHaveValue('75,487.50')
-    await expect(canvas.getByRole('status')).toHaveTextContent('Fee: AED 10.00. Arrives: Within an hour.')
+    await userEvent.click(canvas.getByRole('radio', { name: /Other bank account/ }))
+    // (1,000 − 5) × 278.5
+    await expect(receive).toHaveValue('277,107.50')
+    await expect(canvas.getByRole('status')).toHaveTextContent(/Fee: \S{1,3}5\.00\. Arrives: 1 to 3 business days\./)
 
     await userEvent.click(canvas.getByRole('button', { name: 'Continue' }))
     await expect(args.onContinue).toHaveBeenCalledWith(
-      expect.objectContaining({ sendAmount: 1_000_00, fee: 10_00, convertedAmount: 990_00, receiveAmount: 75_487_50 }),
-      expect.objectContaining({ id: 'cash' }),
+      expect.objectContaining({ sendAmount: 1_000_00, fee: 5_00, convertedAmount: 995_00, receiveAmount: 277_107_50 }),
+      expect.objectContaining({ id: 'other' }),
     )
   },
 }
@@ -143,15 +148,15 @@ export const InvalidAmount: Story = {
 
 /** An amount that the fee would swallow is refused, with the fee in the message. */
 export const BelowTheFee: Story = {
-  args: { defaultMethod: 'cash' },
+  args: { defaultMethod: 'other' },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     const send = canvas.getByRole('textbox', { name: 'You send' })
 
-    await userEvent.type(send, '8')
+    await userEvent.type(send, '3')
     await userEvent.tab()
 
-    await expect(send).toHaveAccessibleDescription(/Enter more than the AED\s10\.00 fee/)
+    await expect(send).toHaveAccessibleDescription(/Enter more than the \S{1,3}5\.00 fee/)
   },
 }
 
@@ -174,14 +179,14 @@ export const NothingTyped: Story = {
  * The component holds no rule of its own about them.
  */
 export const ThreeDecimalCurrency: Story = {
-  args: { targetCurrency: 'KWD', rate: 0.0837, defaultSendAmount: 1_000_00, variant: 'compact' },
+  args: { targetCurrency: 'KWD', rate: 0.3075, defaultSendAmount: 1_000_00, variant: 'compact' },
   play: async ({ canvasElement }) => {
-    await expect(within(canvasElement).getByRole('textbox', { name: 'Recipient gets' })).toHaveValue('83.700')
+    await expect(within(canvasElement).getByRole('textbox', { name: 'Recipient gets' })).toHaveValue('307.500')
   },
 }
 
 export const DarkTheme: Story = {
-  args: { defaultSendAmount: 1_000_00, defaultMethod: 'cash' },
+  args: { defaultSendAmount: 1_000_00, defaultMethod: 'other' },
   globals: { theme: 'dark' },
 }
 
@@ -195,12 +200,12 @@ export const Arabic: Story = {
   args: {
     locale: 'ar-AE',
     methods: [
-      { id: 'mal', label: 'حساب مال', arrival: 'فورًا', fee: 0 },
-      { id: 'bank', label: 'حساب مصرفي', arrival: 'خلال دقائق', fee: 0 },
-      { id: 'cash', label: 'استلام نقدي', arrival: 'خلال ساعة', fee: 10_00 },
+      { id: 'mal', label: 'مستخدم مال', arrival: 'فورًا', fee: 0 },
+      { id: 'linked', label: 'حساب مرتبط بالروبية', arrival: 'خلال دقائق', fee: 0 },
+      { id: 'other', label: 'حساب مصرفي آخر', arrival: 'من يوم إلى 3 أيام عمل', fee: 5_00 },
     ],
     labels: {
-      title: 'أرسل المال إلى الخارج',
+      title: 'أرسل المال',
       send: 'ترسل',
       receive: 'يستلم المستفيد',
       method: 'طريقة الاستلام',
@@ -224,6 +229,6 @@ export const Arabic: Story = {
 
     // Arabic-Indic digits are valid input.
     await userEvent.type(canvas.getByRole('textbox', { name: 'ترسل' }), '١٠٠٠')
-    await expect(canvas.getByRole('textbox', { name: 'يستلم المستفيد' })).toHaveValue('76,250.00')
+    await expect(canvas.getByRole('textbox', { name: 'يستلم المستفيد' })).toHaveValue('278,500.00')
   },
 }
