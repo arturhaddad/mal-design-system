@@ -3,13 +3,17 @@ import { expect, fn, userEvent, within } from 'storybook/test'
 
 import { TransferQuote, type TransferMethod } from './TransferQuote'
 
-// Examples for the stories, not Mal's prices or products. The first two methods follow the ones
-// mal.ai describes (to a Mal user, and to a linked PKR account). The third is hypothetical: it is
-// here so that a method with a fee can be seen.
+// Examples for the stories, not Mal's prices or products. The two methods follow the ones
+// mal.ai describes: to a Mal user, and to a linked PKR account.
 const methods: [TransferMethod, ...TransferMethod[]] = [
   { id: 'mal', label: 'Mal recipient', arrival: 'Instantly', fee: 0 },
   { id: 'linked', label: 'Linked PKR account', arrival: 'In minutes', fee: 0 },
-  { id: 'other', label: 'Other bank account', arrival: '1 to 3 business days', fee: 5_00 },
+]
+
+// A made-up third method, only for the stories that show what a fee does.
+const methodsWithAFee: [TransferMethod, ...TransferMethod[]] = [
+  ...methods,
+  { id: 'fee', label: 'Example method with a fee', arrival: '1 to 3 business days', fee: 5_00 },
 ]
 
 const meta = {
@@ -39,10 +43,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-/**
- * Type either amount. The rate and the fee are examples. The first two methods follow the ones
- * mal.ai describes, and the third is hypothetical.
- */
+/** Type either amount. The rate is an example, and the two methods follow the ones mal.ai describes. */
 export const Playground: Story = {
   args: { defaultSendAmount: 1_000_00 },
 }
@@ -100,10 +101,12 @@ export const EitherAmount: Story = {
 
 /**
  * Methods are radio buttons, so arrow keys move between them. A method with a
- * fee takes it out of what is sent, and the breakdown shows the sum.
+ * fee takes it out of what is sent, and the breakdown shows the sum. The third
+ * method here is made up to show that.
  */
 export const ChoosingAMethod: Story = {
-  args: { defaultSendAmount: 1_000_00 },
+  args: { defaultSendAmount: 1_000_00, methods: methodsWithAFee },
+  parameters: { controls: { exclude: ['defaultMethod'] } },
   play: async ({ args, canvasElement }) => {
     const canvas = within(canvasElement)
     const receive = canvas.getByRole('textbox', { name: 'Recipient gets' })
@@ -111,7 +114,7 @@ export const ChoosingAMethod: Story = {
     await expect(canvas.getByRole('radio', { name: /Mal recipient/ })).toBeChecked()
     await expect(receive).toHaveValue('278,500.00')
 
-    await userEvent.click(canvas.getByRole('radio', { name: /Other bank account/ }))
+    await userEvent.click(canvas.getByRole('radio', { name: /Example method with a fee/ }))
     // (1,000 − 5) × 278.5
     await expect(receive).toHaveValue('277,107.50')
     await expect(canvas.getByRole('status')).toHaveTextContent(/Fee: \S{1,3}5\.00\. Arrives: 1 to 3 business days\./)
@@ -119,7 +122,7 @@ export const ChoosingAMethod: Story = {
     await userEvent.click(canvas.getByRole('button', { name: 'Continue' }))
     await expect(args.onContinue).toHaveBeenCalledWith(
       expect.objectContaining({ sendAmount: 1_000_00, fee: 5_00, convertedAmount: 995_00, receiveAmount: 277_107_50 }),
-      expect.objectContaining({ id: 'other' }),
+      expect.objectContaining({ id: 'fee' }),
     )
   },
 }
@@ -146,9 +149,10 @@ export const InvalidAmount: Story = {
   },
 }
 
-/** An amount that the fee would swallow is refused, with the fee in the message. */
+/** An amount that the fee would swallow is refused, with the fee in the message. The method is made up. */
 export const BelowTheFee: Story = {
-  args: { defaultMethod: 'other' },
+  args: { methods: methodsWithAFee, defaultMethod: 'fee' },
+  parameters: { controls: { exclude: ['defaultMethod'] } },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     const send = canvas.getByRole('textbox', { name: 'You send' })
@@ -186,7 +190,7 @@ export const ThreeDecimalCurrency: Story = {
 }
 
 export const DarkTheme: Story = {
-  args: { defaultSendAmount: 1_000_00, defaultMethod: 'other' },
+  args: { defaultSendAmount: 1_000_00, defaultMethod: 'linked' },
   globals: { theme: 'dark' },
 }
 
@@ -202,7 +206,6 @@ export const Arabic: Story = {
     methods: [
       { id: 'mal', label: 'مستخدم مال', arrival: 'فورًا', fee: 0 },
       { id: 'linked', label: 'حساب مرتبط بالروبية', arrival: 'خلال دقائق', fee: 0 },
-      { id: 'other', label: 'حساب مصرفي آخر', arrival: 'من يوم إلى 3 أيام عمل', fee: 5_00 },
     ],
     labels: {
       title: 'أرسل المال',
