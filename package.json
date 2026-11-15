@@ -15,7 +15,8 @@
     "lint": "oxlint",
     "test": "vitest run --project unit",
     "test:stories": "vitest run --project storybook",
-    "test:build": "node scripts/smoke-build.mjs"
+    "test:build": "node scripts/smoke-build.mjs",
+    "tokens:native": "node scripts/build-native-tokens.ts"
   },
   "peerDependencies": {
     "react": "^19.0.0",
