@@ -80,3 +80,33 @@ describe.each(componentNames)('%s', (name) => {
     expect(publicApi).toContain(`'./components/${name}'`)
   })
 })
+
+const nativeNames = componentNames.filter((name) => existsSync(`${componentsDir}${name}/${name}.native.tsx`))
+
+/** A component with a React Native version is one component built twice. These keep the two together. */
+describe.each(nativeNames)('%s on React Native', (name) => {
+  const folder = `${componentsDir}${name}/`
+  const read = (file: string) => (existsSync(folder + file) ? readFileSync(folder + file, 'utf8') : '')
+
+  it('declares its contract once, and both platforms extend it', () => {
+    expect(existsSync(`${folder}${name}.contract.ts`), `${name}/${name}.contract.ts is missing`).toBe(true)
+    for (const file of [`${name}.tsx`, `${name}.native.tsx`]) {
+      expect(read(file), `${file} does not import the contract`).toContain(`'./${name}.contract'`)
+      expect(read(file), `${file} does not extend the contract`).toMatch(new RegExp(`\\b${name}Contract\\b`))
+    }
+  })
+
+  it('reads the theme and uses no class name', () => {
+    expect(code(`${folder}${name}.native.tsx`)).toContain('useTheme()')
+    expect(code(`${folder}${name}.native.tsx`)).not.toMatch(/\bclassName\b/)
+  })
+
+  it.each(['Playground', 'DarkTheme'])('has the %s story', (story) => {
+    expect(read(`${name}.native.stories.tsx`)).toMatch(new RegExp(`export const ${story}\\b`))
+  })
+
+  it('is exported from src/native/index.ts', () => {
+    const nativeApi = readFileSync(new URL('../native/index.ts', import.meta.url), 'utf8')
+    expect(nativeApi).toContain(`'../components/${name}/${name}.native'`)
+  })
+})

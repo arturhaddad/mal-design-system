@@ -12,6 +12,11 @@ const dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  resolve: {
+    // The React Native components render in the browser through react-native-web.
+    // The pattern is exact, so `react-native-web` itself is left alone.
+    alias: [{ find: /^react-native$/, replacement: 'react-native-web' }],
+  },
   test: {
     projects: [
       {
