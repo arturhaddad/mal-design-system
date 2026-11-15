@@ -146,7 +146,7 @@ export const BelowNisab: Story = {
 }
 
 /**
- * The amount fields behave like every amount field in the system: digits and
+ * The amount fields behave like the ones in `TransferQuote`: digits and
  * one decimal point, thousands grouped while the person types, decimals
  * completed when the field is left. Completing the decimals does not clear a
  * result, because the amount has not changed.

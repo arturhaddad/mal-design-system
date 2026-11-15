@@ -2,8 +2,8 @@
  * The contrast contract of the token set.
  *
  * Foreground tokens are listed with the backgrounds they are allowed to sit
- * on and the WCAG 2.2 ratio that pairing must hold. Disabled text and
- * decorative borders are left out, as WCAG exempts them. `tokens.test.ts` checks the
+ * on and the WCAG 2.2 ratio that pairing must hold. Disabled text and the
+ * borders of cards and panels are left out on purpose. `tokens.test.ts` checks the
  * whole list in both themes, and the Colour page in Storybook renders it live.
  */
 
