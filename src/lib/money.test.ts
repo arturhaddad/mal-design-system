@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { currencySymbol, formatAmountInput, formatMoney, minorUnitDigits, parseMoney } from './money'
+import { currencySymbol, formatAmountInput, formatMoney, maskAmount, minorUnitDigits, parseMoney } from './money'
 
 describe('minorUnitDigits', () => {
   it('follows ISO 4217, including three-decimal Gulf currencies', () => {
@@ -86,5 +86,76 @@ describe('formatAmountInput', () => {
     for (const [amount, currency] of [[27_850_00, 'PKR'], [15_025, 'JPY'], [30_750, 'KWD'], [1_234_567_89, 'AED']] as const) {
       expect(parseMoney(formatAmountInput(amount, currency), currency)).toBe(amount)
     }
+  })
+})
+
+describe('maskAmount', () => {
+  // The caret is written as "|" to keep the cases readable.
+  const mask = (typed: string, currency = 'USD') => {
+    const caret = typed.includes('|') ? typed.indexOf('|') : typed.length
+    const result = maskAmount(typed.replace('|', ''), currency, caret)
+    return typed.includes('|') ? `${result.text.slice(0, result.caret)}|${result.text.slice(result.caret)}` : result.text
+  }
+
+  it('groups thousands as the person types', () => {
+    expect(mask('1')).toBe('1')
+    expect(mask('1000')).toBe('1,000')
+    expect(mask('1,0000')).toBe('10,000')
+    expect(mask('1234567.89')).toBe('1,234,567.89')
+  })
+
+  it('keeps only digits and one decimal separator', () => {
+    expect(mask('a1b2c')).toBe('12')
+    expect(mask('10904,00099,2.82')).toBe('10,904,000,992.82')
+    expect(mask('1.2.3')).toBe('1.23')
+    expect(mask('$ 1,250.50')).toBe('1,250.50')
+    expect(mask('abc')).toBe('')
+  })
+
+  it('stops at the decimals of the currency', () => {
+    expect(mask('1.239')).toBe('1.23')
+    expect(mask('1.2399', 'KWD')).toBe('1.239')
+    expect(mask('1500.5', 'JPY')).toBe('15,005')
+  })
+
+  it('lets a decimal be typed one key at a time', () => {
+    expect(mask('12.')).toBe('12.')
+    expect(mask('12.5')).toBe('12.5')
+    expect(mask('.')).toBe('0.')
+    expect(mask('.5')).toBe('0.5')
+  })
+
+  it('drops leading zeros', () => {
+    expect(mask('007')).toBe('7')
+    expect(mask('0')).toBe('0')
+    expect(mask('0.50')).toBe('0.50')
+  })
+
+  it('reads Arabic-Indic digits and the Arabic decimal separator', () => {
+    expect(mask('١٢٣٤٫٥')).toBe('1,234.5')
+  })
+
+  it('stops at twelve whole digits, which keeps every amount a safe integer', () => {
+    expect(mask('1234567890123456')).toBe('123,456,789,012')
+  })
+
+  it('keeps the caret after the same digit when separators move', () => {
+    expect(mask('1000|')).toBe('1,000|')
+    // A digit typed in the middle of 1,000.00
+    expect(mask('1,5|000.00')).toBe('15|,000.00')
+    // A digit deleted from 12,345: the comma moves, the caret stays after the 1
+    expect(mask('1|,345')).toBe('1|,345')
+    expect(mask('1|2345')).toBe('1|2,345')
+    // Something that is not kept does not move the caret forward
+    expect(mask('12a|3')).toBe('12|3')
+    expect(mask('00|7')).toBe('|7')
+    expect(mask('.|5')).toBe('0.|5')
+  })
+
+  it('writes text that parseMoney reads back', () => {
+    for (const typed of ['1000', '1234567.89', '12.', '.5', '0']) {
+      expect(parseMoney(mask(typed), 'USD')).not.toBeNull()
+    }
+    expect(parseMoney(mask('1234567.89'), 'USD')).toBe(1_234_567_89)
   })
 })

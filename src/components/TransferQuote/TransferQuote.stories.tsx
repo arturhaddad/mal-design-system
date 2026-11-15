@@ -72,8 +72,8 @@ export const Variants: Story = {
 }
 
 /**
- * Either amount can be typed and the other follows. The field being typed in
- * is never rewritten. Leaving it announces the outcome to screen readers.
+ * Either amount can be typed and the other follows. Leaving the field
+ * completes the decimals and announces the outcome to screen readers.
  */
 export const EitherAmount: Story = {
   play: async ({ canvasElement }) => {
@@ -83,16 +83,16 @@ export const EitherAmount: Story = {
 
     await userEvent.type(send, '1000')
     await expect(receive).toHaveValue('278,500.00')
-    // What the person typed stays as they typed it.
-    await expect(send).toHaveValue('1000')
+    await expect(send).toHaveValue('1,000')
 
     await userEvent.clear(receive)
     await userEvent.type(receive, '50000')
     // 50,000 / 278.5 is 179.533…, rounded up so that 50,000 arrives.
     await expect(send).toHaveValue('179.54')
-    await expect(receive).toHaveValue('50000')
+    await expect(receive).toHaveValue('50,000')
 
     await userEvent.tab()
+    await expect(receive).toHaveValue('50,000.00')
     await expect(canvas.getByRole('status')).toHaveTextContent(
       /You send \S{1,3}179\.54\. Recipient gets PKR 50,000\.00\. Fee: Free\. Arrives: Instantly\./,
     )
@@ -128,24 +128,42 @@ export const ChoosingAMethod: Story = {
 }
 
 /**
- * Something that is not an amount shows its error once the person leaves the
- * field. The other amount empties instead of showing a stale figure.
+ * The amount fields take digits and one decimal point, and nothing else. They
+ * group thousands while the person types and keep the caret where it was.
+ * Leaving the field completes the decimals.
+ *
+ * Amounts are typed the English way in every locale: the point is the decimal
+ * separator, and a comma is dropped. A locale that writes `1.250,50` is not
+ * served yet.
  */
-export const InvalidAmount: Story = {
-  play: async ({ args, canvasElement }) => {
+export const Typing: Story = {
+  play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    const send = canvas.getByRole('textbox', { name: 'You send' })
+    const send = canvas.getByRole<HTMLInputElement>('textbox', { name: 'You send' })
 
-    await userEvent.type(send, 'a thousand')
+    // Letters, extra separators and a third decimal are dropped as they are typed.
+    await userEvent.type(send, 'a1b2,3x4.5.67')
+    await expect(send).toHaveValue('1,234.56')
+
+    // A digit typed after the 1: the separators move and the caret stays after the new digit.
+    await userEvent.type(send, '9', { initialSelectionStart: 1, initialSelectionEnd: 1 })
+    await expect(send).toHaveValue('19,234.56')
+    await expect(send.selectionStart).toBe(2)
+
+    // Backspace right after a separator deletes the digit before it, and Delete right before one deletes the digit after.
+    await userEvent.type(send, '{Backspace}', { initialSelectionStart: 3, initialSelectionEnd: 3 })
+    await expect(send).toHaveValue('1,234.56')
+    await expect(send.selectionStart).toBe(1)
+    await userEvent.type(send, '{Delete}', { initialSelectionStart: 1, initialSelectionEnd: 1 })
+    await expect(send).toHaveValue('134.56')
+    await expect(send.selectionStart).toBe(1)
+
+    await userEvent.clear(send)
+    await userEvent.type(send, '1250')
+    await expect(send).toHaveValue('1,250')
     await userEvent.tab()
-
-    await expect(send).toHaveAttribute('aria-invalid', 'true')
-    await expect(send).toHaveAccessibleDescription(/Enter an amount using digits/)
-    await expect(canvas.getByRole('textbox', { name: 'Recipient gets' })).toHaveValue('')
-
-    await userEvent.click(canvas.getByRole('button', { name: 'Continue' }))
-    await expect(send).toHaveFocus()
-    await expect(args.onContinue).not.toHaveBeenCalled()
+    await expect(send).toHaveValue('1,250.00')
+    await expect(send).not.toHaveAttribute('aria-invalid', 'true')
   },
 }
 
@@ -219,7 +237,6 @@ export const Arabic: Story = {
       rate: 'سعر الصرف',
       arrival: 'موعد الوصول',
       continue: 'متابعة',
-      invalidAmount: 'أدخل مبلغًا بالأرقام، مثل 1250.50.',
       emptyAmount: 'أدخل مبلغًا.',
       tooSmall: 'أدخل مبلغًا أكبر.',
       belowFee: (fee) => `أدخل مبلغًا أكبر من الرسوم (${fee}).`,

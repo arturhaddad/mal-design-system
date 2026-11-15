@@ -67,12 +67,16 @@ const ARABIC_INDIC_ZERO = 0x0660
 const EXTENDED_ARABIC_INDIC_ZERO = 0x06f0
 
 /** Maps Arabic-Indic digits and separators to their ASCII equivalents. */
-function toAsciiNumber(input: string): string {
+/** Arabic-Indic digits and the Arabic decimal separator as ASCII, one character for one. */
+function toAsciiDigits(input: string): string {
   return input
     .replace(/[٠-٩]/g, (digit) => String(digit.charCodeAt(0) - ARABIC_INDIC_ZERO))
     .replace(/[۰-۹]/g, (digit) => String(digit.charCodeAt(0) - EXTENDED_ARABIC_INDIC_ZERO))
     .replace(/٫/g, '.')
-    .replace(/[٬,\s]/g, '')
+}
+
+function toAsciiNumber(input: string): string {
+  return toAsciiDigits(input).replace(/[٬,\s]/g, '')
 }
 
 /**
@@ -108,4 +112,64 @@ export function formatAmountInput(amountMinor: number, currency: string): string
   return new Intl.NumberFormat('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(
     amountMinor / 10 ** digits,
   )
+}
+
+/** Twelve whole digits keep every amount a safe integer, whatever the decimals of the currency. */
+const MAX_WHOLE_DIGITS = 12
+
+/**
+ * What an amount field shows while the person types: digits, grouped in
+ * thousands, with one decimal separator and no more decimals than the
+ * currency has. Anything else typed or pasted is dropped.
+ *
+ * It also says where the caret goes. The caret stays after the same digit, so
+ * a separator appearing or moving does not push it to the end of the field.
+ *
+ * Like `formatAmountInput`, it writes the English way, which is what
+ * `parseMoney` reads.
+ */
+export function maskAmount(text: string, currency: string, caret = text.length): { text: string; caret: number } {
+  const decimals = minorUnitDigits(currency)
+  const typed = toAsciiDigits(text)
+
+  let whole = ''
+  let fraction = ''
+  let hasSeparator = false
+  let droppedZero = false
+  // How many kept characters sit before the caret.
+  let keptBeforeCaret = 0
+
+  for (let index = 0; index < typed.length; index += 1) {
+    if (index === caret) keptBeforeCaret = whole.length + Number(hasSeparator) + fraction.length
+
+    const character = typed[index]
+    if (character >= '0' && character <= '9') {
+      if (hasSeparator) {
+        if (fraction.length < decimals) fraction += character
+      } else if (character === '0' && whole === '') {
+        droppedZero = true
+      } else if (whole.length < MAX_WHOLE_DIGITS) {
+        whole += character
+      }
+    } else if (character === '.' && !hasSeparator && decimals > 0) {
+      // ".5" is "0.5".
+      if (whole === '') whole = '0'
+      hasSeparator = true
+    }
+  }
+  if (whole === '' && droppedZero) whole = '0'
+  const kept = whole.length + Number(hasSeparator) + fraction.length
+  if (caret >= typed.length) keptBeforeCaret = kept
+  keptBeforeCaret = Math.min(keptBeforeCaret, kept)
+
+  const grouped = whole.replace(/\B(?=(\d{3})+$)/g, ',')
+  const masked = hasSeparator ? `${grouped}.${fraction}` : grouped
+
+  // Walk the grouped text until the same number of kept characters is behind the caret.
+  let position = 0
+  for (let seen = 0; position < masked.length && seen < keptBeforeCaret; position += 1) {
+    if (masked[position] !== ',') seen += 1
+  }
+
+  return { text: masked, caret: position }
 }

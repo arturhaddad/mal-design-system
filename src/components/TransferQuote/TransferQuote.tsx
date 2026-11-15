@@ -1,7 +1,7 @@
-import { useId, useRef, useState, type FormEvent } from 'react'
+import { useId, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 
 import { cx } from '../../lib/cx'
-import { formatAmountInput, formatMoney, parseMoney } from '../../lib/money'
+import { formatAmountInput, formatMoney, maskAmount, parseMoney } from '../../lib/money'
 import { Badge } from '../Badge'
 import { Button } from '../Button'
 import { InputField } from '../InputField'
@@ -38,7 +38,6 @@ export interface TransferQuoteLabels {
   rateValue: (values: { source: string; target: string }) => string
   arrival: string
   continue: string
-  invalidAmount: string
   emptyAmount: string
   tooSmall: string
   belowFee: (fee: string) => string
@@ -88,7 +87,6 @@ const defaultLabels: TransferQuoteLabels = {
   rateValue: ({ source, target }) => `${source} = ${target}`,
   arrival: 'Arrives',
   continue: 'Continue',
-  invalidAmount: 'Enter an amount using digits, for example 1250.50.',
   emptyAmount: 'Enter an amount.',
   tooSmall: 'Enter a larger amount.',
   belowFee: (fee) => `Enter more than the ${fee} fee.`,
@@ -97,12 +95,16 @@ const defaultLabels: TransferQuoteLabels = {
 }
 
 type Side = 'send' | 'receive'
-type Problem = 'invalid' | 'empty' | 'tooSmall' | 'belowFee'
+type Problem = 'empty' | 'tooSmall' | 'belowFee'
 
 /**
  * A quote for sending money across currencies: what the sender pays, what the
  * recipient gets, and the rate, fee and arrival time in between, all visible
  * before anyone commits. Either amount can be typed and the other follows.
+ *
+ * The amount fields take digits and one decimal point. They group thousands
+ * while the person types, and complete the decimals when the field is left.
+ * They are typed the English way (`1,250.50`) in every locale.
  *
  * The product supplies the rate and the methods. The maths lives in
  * `quoteFromSend` and `quoteFromReceive`, exported on their own for use
@@ -134,7 +136,7 @@ function QuoteForm({
   const methodName = useId()
   const inputs = useRef<Partial<Record<Side, HTMLInputElement | null>>>({})
 
-  // The amount the person typed last, as they typed it. The other amount is always worked out from it.
+  // The amount the person typed last, as the mask shows it. The other amount is always worked out from it.
   const [typed, setTyped] = useState<{ side: Side; text: string }>(() => ({
     side: 'send',
     text: defaultSendAmount ? formatAmountInput(defaultSendAmount, sourceCurrency) : '',
@@ -143,6 +145,17 @@ function QuoteForm({
   // An error waits until the person leaves the field. An empty field only counts once they try to continue.
   const [checked, setChecked] = useState<'no' | 'onBlur' | 'onContinue'>('no')
   const [announcement, setAnnouncement] = useState('')
+  // Where the caret belongs once the masked text is in the field.
+  const caret = useRef<{ side: Side; position: number } | null>(null)
+
+  // React leaves the caret at the end of a value it rewrites. This puts it back before the browser paints.
+  useLayoutEffect(() => {
+    if (!caret.current) return
+    const { side, position } = caret.current
+    caret.current = null
+    const input = inputs.current[side]
+    if (input && document.activeElement === input) input.setSelectionRange(position, position)
+  })
 
   const method = methods.find(({ id }) => id === methodId) ?? methods[0]
   const currencyOf: Record<Side, string> = { send: sourceCurrency, receive: targetCurrency }
@@ -150,8 +163,8 @@ function QuoteForm({
   const feeText = (fee: number) => (fee === 0 ? labels.free : money(fee, sourceCurrency))
 
   function quoteWith({ fee }: TransferMethod): { quote: Quote | null; problem: Problem | null } {
-    const amount = parseMoney(typed.text, currencyOf[typed.side])
-    if (amount === null) return { quote: null, problem: 'invalid' }
+    // The mask only lets amounts through, so there is no "not a number" case to report.
+    const amount = parseMoney(typed.text, currencyOf[typed.side]) ?? 0
 
     const corridor = { sourceCurrency, targetCurrency, rate, fee }
     const quote =
@@ -167,7 +180,6 @@ function QuoteForm({
   const { quote, problem } = quoteWith(method)
 
   const messages: Record<Problem, string> = {
-    invalid: labels.invalidAmount,
     empty: labels.emptyAmount,
     tooSmall: labels.tooSmall,
     belowFee: labels.belowFee(money(method.fee, sourceCurrency)),
@@ -179,7 +191,7 @@ function QuoteForm({
     send: quote ? formatAmountInput(quote.sendAmount, sourceCurrency) : '',
     receive: quote ? formatAmountInput(quote.receiveAmount, targetCurrency) : '',
   }
-  // The field being typed in is never rewritten. Only the other one follows.
+  // The field being typed in shows the masked text. The other one follows.
   const value = (side: Side) => (side === typed.side ? typed.text : derived[side])
 
   function announce(settled: Quote | null, { fee, arrival }: TransferMethod) {
@@ -194,12 +206,30 @@ function QuoteForm({
     )
   }
 
-  function handleChange(side: Side, text: string) {
-    setTyped({ side, text })
+  function handleChange(side: Side, input: HTMLInputElement) {
+    const masked = maskAmount(input.value, currencyOf[side], input.selectionStart ?? input.value.length)
+    caret.current = { side, position: masked.caret }
+    setTyped({ side, text: masked.text })
     setChecked('no')
   }
 
-  function handleBlur() {
+  // A separator is not something the person typed, so deleting never stops at one. Backspace
+  // right after a separator steps over it and deletes the digit before, and Delete does the same forwards.
+  function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    const input = event.currentTarget
+    const { selectionStart: start, selectionEnd: end, value } = input
+    if (start === null || start !== end) return
+
+    if (event.key === 'Backspace' && value[start - 1] === ',') input.setSelectionRange(start - 1, start - 1)
+    if (event.key === 'Delete' && value[start] === ',') input.setSelectionRange(start + 1, start + 1)
+  }
+
+  function handleBlur(side: Side) {
+    // Leaving the field completes the decimals: "1,250" becomes "1,250.00".
+    if (side === typed.side && typed.text !== '') {
+      const amount = parseMoney(typed.text, currencyOf[side])
+      if (amount !== null) setTyped({ side, text: formatAmountInput(amount, currencyOf[side]) })
+    }
     setChecked((current) => (current === 'onContinue' ? current : 'onBlur'))
     announce(quote, method)
   }
@@ -238,8 +268,9 @@ function QuoteForm({
       autoComplete="off"
       placeholder={formatAmountInput(0, currencyOf[side])}
       value={value(side)}
-      onChange={(event) => handleChange(side, event.target.value)}
-      onBlur={handleBlur}
+      onChange={(event) => handleChange(side, event.target)}
+      onKeyDown={handleKeyDown}
+      onBlur={() => handleBlur(side)}
     />
   )
 
