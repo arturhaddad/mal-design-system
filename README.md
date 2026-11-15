@@ -5,8 +5,6 @@ A starter design system for Mal's web products: a token layer, five accessible R
 - **Playground:** https://mal-design-system-weld.vercel.app
 - **Stack:** React 19, TypeScript, Tailwind CSS v4, Storybook 10, Vitest
 
-> A take-home assessment for the Web Product Engineer role. This is not an official Mal product. Colours and typeface are read from mal.ai; everything else is my interpretation.
-
 ## Run it
 
 ```sh
