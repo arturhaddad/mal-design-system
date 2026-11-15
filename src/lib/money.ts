@@ -3,13 +3,28 @@
  *
  * Amounts cross the component boundary as integers in minor units (fils for
  * AED), the way ledgers store them, so no component ever does float maths on
- * money. How many minor units make one major unit comes from `Intl`, which
- * keeps the three-decimal Gulf currencies (KWD, BHD, OMR) correct for free.
+ * money. How many minor units make one major unit comes from ISO 4217, which
+ * keeps the three-decimal Gulf currencies (KWD, BHD, OMR) correct.
  */
+
+/**
+ * The currencies ISO 4217 does not give two decimals. Every other code has two.
+ *
+ * `Intl` is not the source, although it knows a number of decimals for each
+ * currency: that number is how a currency is usually displayed, and it differs
+ * between runtimes. Node gives the Pakistani rupee 2 and Chromium gives it 0,
+ * which would scale an amount by a hundred between the server and the browser.
+ */
+const MINOR_UNIT_DIGITS: Record<string, number> = {
+  ...Object.fromEntries('BIF CLP DJF GNF ISK JPY KMF KRW PYG RWF UGX UYI VND VUV XAF XOF XPF'.split(' ').map((code) => [code, 0])),
+  ...Object.fromEntries('BHD IQD JOD KWD LYD OMR TND'.split(' ').map((code) => [code, 3])),
+  CLF: 4,
+  UYW: 4,
+}
 
 /** Decimal places ISO 4217 gives a currency: 2 for AED, 3 for KWD, 0 for JPY. */
 export function minorUnitDigits(currency: string): number {
-  return new Intl.NumberFormat('en', { style: 'currency', currency }).resolvedOptions().maximumFractionDigits ?? 2
+  return MINOR_UNIT_DIGITS[currency.toUpperCase()] ?? 2
 }
 
 /** The currency as the locale writes it: "AED" in English, "د.إ." in Arabic. */
@@ -31,9 +46,17 @@ export function formatMoney(
   currency: string,
   { locale = 'en-AE', signDisplay = 'auto' }: FormatMoneyOptions = {},
 ): string {
-  const major = amountMinor / 10 ** minorUnitDigits(currency)
+  const digits = minorUnitDigits(currency)
+  const major = amountMinor / 10 ** digits
   return (
-    new Intl.NumberFormat(locale, { style: 'currency', currency, signDisplay })
+    new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency,
+      signDisplay,
+      // Set by hand, so every runtime prints the decimals the ledger counts in.
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    })
       .format(major)
       // A real minus sign, not the hyphen Intl emits: it has the width of "+" and digits.
       .replace('-', '−')
@@ -73,4 +96,16 @@ export function parseMoney(input: string, currency: string): number | null {
 
   const minor = Number(whole) * 10 ** digits + Number(fraction.padEnd(digits, '0') || 0)
   return Number.isSafeInteger(minor) ? minor : null
+}
+
+/**
+ * An amount as text for an input, e.g. "27,850.00": digits only, grouped, with
+ * the decimals of the currency and no symbol. It is always written the
+ * English way, whatever the locale, because that is what `parseMoney` reads.
+ */
+export function formatAmountInput(amountMinor: number, currency: string): string {
+  const digits = minorUnitDigits(currency)
+  return new Intl.NumberFormat('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(
+    amountMinor / 10 ** digits,
+  )
 }
