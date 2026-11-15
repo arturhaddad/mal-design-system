@@ -82,6 +82,8 @@ export const contrastPairs: ContrastPair[] = [
   ...text('on-brand-strong', 'brand-strong'),
   ...text('on-brand-strong-muted', 'brand-strong'),
   ...boundary('--border-color-control', 'canvas', 'surface'),
+  // The ring of a selected option, on the option's own tint.
+  ...boundary('--border-color-control-hover', 'surface', 'subtle'),
   ...boundary('--border-color-danger', 'canvas', 'surface'),
   ...boundary('--outline-color-focus', 'canvas', 'surface'),
 ]
