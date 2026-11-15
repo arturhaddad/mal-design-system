@@ -24,6 +24,7 @@ export const Playground: Story = {}
 
 /** Four levels of emphasis. A view has one `primary`; everything else steps down from it. */
 export const Variants: Story = {
+  parameters: { controls: { exclude: ['variant', 'children'] } },
   render: (args) => (
     <div className="flex flex-wrap items-center gap-3">
       <Button {...args} variant="primary">
@@ -44,6 +45,7 @@ export const Variants: Story = {
 
 /** `md` is the default and a 44px touch target. `sm` grows an invisible hit area on touch screens. */
 export const Sizes: Story = {
+  parameters: { controls: { exclude: ['size', 'children'] } },
   render: (args) => (
     <div className="flex flex-wrap items-center gap-3">
       <Button {...args} size="sm">
@@ -61,6 +63,7 @@ export const Sizes: Story = {
 
 /** Icons sit at the start or the end of the label, so they swap sides in right-to-left text. */
 export const WithIcons: Story = {
+  parameters: { controls: { exclude: ['children'] } },
   render: (args) => (
     <div className="flex flex-wrap items-center gap-3">
       <Button {...args} iconEnd={<ArrowUpRightIcon />}>
@@ -93,6 +96,7 @@ export const Loading: Story = {
 
 /** Disabled buttons use their own colour tokens instead of opacity, so they look the same on any surface. */
 export const Disabled: Story = {
+  parameters: { controls: { exclude: ['disabled', 'variant', 'children'] } },
   render: (args) => (
     <div className="flex flex-wrap items-center gap-3">
       <Button {...args} disabled variant="primary">
@@ -128,6 +132,7 @@ export const DarkTheme: Story = {
 /** Arabic copy, right to left. The layout mirrors with no extra props. Copy is illustrative. */
 export const Arabic: Story = {
   globals: { direction: 'rtl' },
+  parameters: { controls: { exclude: ['children'] } },
   render: (args) => (
     <div className="flex flex-wrap items-center gap-3">
       <Button {...args} iconEnd={<ArrowUpRightIcon />}>

@@ -90,6 +90,7 @@ export const CalculatesOnSubmit: Story = {
  * thresholds, and the result follows without a new calculation.
  */
 export const NisabStandard: Story = {
+  parameters: { controls: { exclude: ['nisab'] } },
   args: { defaultValues: { cash: 30_000_00 } },
   render: function Render(args) {
     const [standard, setStandard] = useState<'silver' | 'gold'>('silver')

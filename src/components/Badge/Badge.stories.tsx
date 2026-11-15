@@ -17,6 +17,8 @@ export const Playground: Story = {}
 
 /** Five tones. The text always carries the meaning, so colour is never the only signal. */
 export const Tones: Story = {
+  // Every badge here is fixed, so the story has no controls. Playground is the one to edit.
+  parameters: { controls: { disable: true } },
   render: () => (
     <div className="flex flex-wrap items-center gap-2">
       <Badge tone="neutral">Scheduled</Badge>
@@ -38,6 +40,7 @@ export const DarkTheme: Story = {
 /** Arabic copy, right to left. The icon stays at the start of the text. Copy is illustrative. */
 export const Arabic: Story = {
   globals: { direction: 'rtl' },
+  parameters: { controls: { disable: true } },
   render: () => (
     <div className="flex flex-wrap items-center gap-2">
       <Badge tone="brand" icon={<KhatamIcon size={14} />}>

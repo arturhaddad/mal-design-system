@@ -32,6 +32,7 @@ export const Playground: Story = {}
 
 /** `outline` is the default. `filled` is quieter, for dense forms inside cards. */
 export const Variants: Story = {
+  parameters: { controls: { exclude: ['variant', 'label'] } },
   render: (args) => (
     <div className="grid gap-5">
       <InputField {...args} variant="outline" label="Outline" />
@@ -41,6 +42,7 @@ export const Variants: Story = {
 }
 
 export const Sizes: Story = {
+  parameters: { controls: { exclude: ['size', 'label'] } },
   render: (args) => (
     <div className="grid gap-5">
       <InputField {...args} size="md" label="Medium, 44px" />
@@ -99,6 +101,7 @@ export const LabelFocusesInput: Story = {
 
 export const DarkTheme: Story = {
   globals: { theme: 'dark' },
+  parameters: { controls: { exclude: ['variant', 'label'] } },
   render: (args) => (
     <div className="grid gap-5">
       <InputField {...args} variant="outline" label="Outline" description="As it appears on your Emirates ID." />
@@ -110,6 +113,7 @@ export const DarkTheme: Story = {
 /** Arabic copy, right to left. The adornment moves to the right-hand start. Copy is illustrative. */
 export const Arabic: Story = {
   globals: { direction: 'rtl' },
+  parameters: { controls: { exclude: ['label', 'placeholder'] } },
   render: (args) => (
     <div className="grid gap-5">
       <InputField

@@ -38,6 +38,7 @@ export const Playground: Story = {}
  * rows share the surface of the list they sit in, with a divider between them.
  */
 export const Variants: Story = {
+  parameters: { controls: { exclude: ['variant'] } },
   render: (args) => (
     <div className="grid gap-6">
       <TransactionCard {...args} variant="card" />
@@ -66,9 +67,10 @@ export const Variants: Story = {
  * readers hear "Received" or "Paid" instead of the sign.
  */
 export const Directions: Story = {
+  parameters: { controls: { exclude: ['direction'] } },
   render: (args) => (
     <div className="grid gap-3">
-      <TransactionCard {...args} />
+      <TransactionCard {...args} direction="outgoing" />
       <TransactionCard {...args} title="Salary" description="Noor Technologies" amount={18_500_00} direction="incoming" />
     </div>
   ),
@@ -76,6 +78,7 @@ export const Directions: Story = {
 
 /** A settled transaction shows no badge. Pending and failed ones say so in words, with an icon. */
 export const Statuses: Story = {
+  parameters: { controls: { exclude: ['status'] } },
   render: (args) => (
     <div className="grid gap-3">
       <TransactionCard {...args} status="completed" />
@@ -108,6 +111,7 @@ export const Interactive: Story = {
 
 /** Rows inside a list. The list owns the surface and the dividers; rows stay borderless. */
 export const List: Story = {
+  parameters: { controls: { exclude: ['variant'] } },
   render: (args) => (
     <ul className="divide-y divide-default rounded-card border border-default bg-surface px-2">
       <li>
@@ -165,6 +169,7 @@ export const Arabic: Story = {
     locale: 'ar-AE',
     labels: { incoming: 'مستلم', outgoing: 'مدفوع', pending: 'قيد المعالجة', failed: 'فشلت' },
   },
+  parameters: { controls: { exclude: ['title', 'description'] } },
   render: (args) => (
     <div className="grid gap-3">
       <TransactionCard {...args} title="كارفور" description="بقالة" />
