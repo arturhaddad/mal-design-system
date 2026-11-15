@@ -1,6 +1,6 @@
 # Mal Design System
 
-A starter design system for Mal's web products: a token layer, five accessible React components and a Storybook playground. Two of the components also have a React Native version.
+A starter design system for Mal's web products: a token layer, six accessible React components and a Storybook playground. Two of the components also have a React Native version.
 
 - **Playground:** https://mal-design-system-weld.vercel.app
 - **Stack:** React 19, TypeScript, Tailwind CSS v4, Storybook 10, Vitest
@@ -12,7 +12,7 @@ nvm use                 # Node 24
 pnpm install
 pnpm dev                # Storybook on http://localhost:6006
 
-pnpm test               # unit tests: token contrast, conventions, money maths, zakat rules
+pnpm test               # unit tests: token contrast, conventions, money maths, zakat rules, transfer quotes
 pnpm test:stories       # every story in Chromium, with axe accessibility checks
 pnpm build && pnpm test:build   # every page of the production build renders
 pnpm lint && pnpm typecheck
@@ -152,4 +152,4 @@ The cost is long class strings, and variants kept by hand in lookup objects. CSS
 
 ## Not here yet
 
-This is a starter, scoped to two days. It is not published as a package: there is no library build, no `exports` map and no `'use client'` boundary on the interactive components. It has no visual regression tests, and its Arabic copy has not been through localisation review. The React Native side covers two of the five components and has only run in a browser: there is no app, no run on a device and no right-to-left story.
+This is a starter, scoped to two days. It is not published as a package: there is no library build, no `exports` map and no `'use client'` boundary on the interactive components. It has no visual regression tests, and its Arabic copy has not been through localisation review. The rates, fees and delivery methods in the `TransferQuote` stories are examples, not Mal's prices or products. The React Native side covers two of the six components and has only run in a browser: there is no app, no run on a device and no right-to-left story.

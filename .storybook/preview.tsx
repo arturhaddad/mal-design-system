@@ -69,7 +69,7 @@ const preview: Preview = {
           'Foundations',
           ['Colour', 'Typography', 'Spacing and radius'],
           'Components',
-          ['Button', 'InputField', 'TransactionCard', 'ZakatCalculator', 'Badge'],
+          ['Button', 'InputField', 'TransactionCard', 'TransferQuote', 'ZakatCalculator', 'Badge'],
           'React Native',
           ['Overview', 'Button', 'TransactionCard'],
         ],
