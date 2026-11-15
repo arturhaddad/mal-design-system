@@ -3,8 +3,8 @@ import { useLayoutEffect, useRef, type ChangeEvent, type FocusEvent, type Keyboa
 import { formatAmountInput, maskAmount, parseMoney } from './money'
 
 /**
- * How every field that takes an amount behaves, so that money is typed the
- * same way across the system.
+ * How a field that takes an amount behaves, so that money is typed the same
+ * way wherever the hook is used. `TransferQuote` and `ZakatCalculator` use it.
  *
  * - It takes digits and one decimal point, and drops anything else.
  * - It groups thousands while the person types and keeps the caret after the same digit.

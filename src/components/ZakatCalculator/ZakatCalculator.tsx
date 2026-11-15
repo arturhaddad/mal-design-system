@@ -62,7 +62,7 @@ export interface ZakatCalculatorProps {
    * prefilled calculator opens with its result already worked out.
    */
   defaultValues?: Partial<Record<ZakatField, number>>
-  /** Called with every successful calculation. */
+  /** Called each time the form is submitted. */
   onCalculate?: (result: ZakatResult) => void
   /** Shows a "Pay" action on the result when zakat is due. */
   onPay?: (result: ZakatResult) => void

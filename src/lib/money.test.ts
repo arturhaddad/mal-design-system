@@ -135,8 +135,14 @@ describe('maskAmount', () => {
     expect(mask('١٢٣٤٫٥')).toBe('1,234.5')
   })
 
-  it('stops at twelve whole digits, which keeps every amount a safe integer', () => {
+  it('stops at twelve whole digits', () => {
     expect(mask('1234567890123456')).toBe('123,456,789,012')
+  })
+
+  it('takes fewer whole digits in a four-decimal currency, so the amount stays a safe integer', () => {
+    const masked = maskAmount('999999999999.9999', 'CLF').text
+    expect(masked).toBe('99,999,999,999.9999')
+    expect(parseMoney(masked, 'CLF')).toBe(999_999_999_999_999)
   })
 
   it('keeps the caret after the same digit when separators move', () => {

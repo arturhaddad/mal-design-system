@@ -24,7 +24,7 @@ const steps = [
 
 /**
  * One token, `--spacing`, sets a 4px grid. Every padding, margin, gap and size
- * utility is a multiple of it, so `p-4` is 16px and nothing lands off the grid.
+ * utility is a multiple of it, so `p-4` is 16px.
  */
 export const SpacingScale: Story = {
   render: () => (

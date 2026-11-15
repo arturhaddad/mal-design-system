@@ -1,11 +1,11 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native'
-import type { GestureResponderEvent } from 'react-native'
+import type { GestureResponderEvent, ViewStyle } from 'react-native'
 
 import { useTheme } from '../../native/useTheme'
 import { useFocusRing } from '../../native/useFocusRing'
 import { formatTransaction } from './formatTransaction'
 import { defaultTransactionCardLabels } from './TransactionCard.contract'
-import type { TransactionCardContract } from './TransactionCard.contract'
+import type { TransactionCardContract, TransactionCardVariant } from './TransactionCard.contract'
 
 export interface TransactionCardProps extends TransactionCardContract {
   /** Makes the whole card one button. */
@@ -27,8 +27,8 @@ function Arrow({ colour, incoming }: { colour: string; incoming: boolean }) {
 }
 
 /**
- * The React Native TransactionCard. Same props and the same words as the web
- * one: both format the amount and the date with `formatTransaction`.
+ * The React Native TransactionCard. The same contract and the same words as
+ * the web one: both format the amount and the date with `formatTransaction`.
  */
 export function TransactionCard({
   title,
@@ -115,11 +115,16 @@ export function TransactionCard({
     </>
   )
 
-  const isCard = variant === 'card'
-  const box = isCard
-    ? { borderRadius: radius.card, borderWidth: 1, borderColor: border.default, backgroundColor: background.surface, padding: spacing * 4 }
-    : { borderRadius: radius.control, paddingHorizontal: spacing * 2, paddingVertical: spacing * 3 }
-  const layout = [styles.layout, { columnGap: spacing * 3 }, box]
+  // One entry per variant: a variant added to the contract fails the type check until it is drawn here.
+  const boxes: Record<TransactionCardVariant, ViewStyle> = {
+    card: { borderRadius: radius.card, borderWidth: 1, borderColor: border.default, backgroundColor: background.surface, padding: spacing * 4 },
+    row: { borderRadius: radius.control, paddingHorizontal: spacing * 2, paddingVertical: spacing * 3 },
+  }
+  const pressedBoxes: Record<TransactionCardVariant, ViewStyle> = {
+    card: { borderColor: border.control },
+    row: { backgroundColor: background.subtle },
+  }
+  const layout = [styles.layout, { columnGap: spacing * 3 }, boxes[variant]]
 
   // A screen reader takes the card as one element. Its name starts with the text on screen, in
   // the order it is written, because voice control matches a spoken name against that. The sign
@@ -144,7 +149,7 @@ export function TransactionCard({
       {...focusRing.handlers}
       style={({ pressed }) => [
         layout,
-        pressed && (isCard ? { borderColor: border.control } : { backgroundColor: background.subtle }),
+        pressed && pressedBoxes[variant],
         focusRing.style,
       ]}
     >

@@ -128,7 +128,7 @@ export const Arabic: Story = {
         startAdornment="د.إ"
         placeholder="0.00"
         inputMode="decimal"
-        error="أدخل مبلغًا صحيحًا."
+        error="المبلغ يتجاوز الحد اليومي."
       />
     </div>
   ),

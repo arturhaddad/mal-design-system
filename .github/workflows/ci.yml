@@ -31,7 +31,7 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Unit tests (token contrast, money, zakat)
+      - name: Unit tests (tokens, conventions, money, zakat, transfer quotes)
         run: pnpm test
 
       - name: Install Chromium

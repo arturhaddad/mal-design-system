@@ -1,6 +1,6 @@
 /**
  * Reads the token values straight from the loaded stylesheets, so the
- * Foundations pages can never drift from the CSS they document.
+ * Colour page can never drift from the CSS it documents.
  */
 import { longHex } from '../tokens/contrast'
 

@@ -66,7 +66,6 @@ export function formatMoney(
 const ARABIC_INDIC_ZERO = 0x0660
 const EXTENDED_ARABIC_INDIC_ZERO = 0x06f0
 
-/** Maps Arabic-Indic digits and separators to their ASCII equivalents. */
 /** Arabic-Indic digits and the Arabic decimal separator as ASCII, one character for one. */
 function toAsciiDigits(input: string): string {
   return input
@@ -114,8 +113,10 @@ export function formatAmountInput(amountMinor: number, currency: string): string
   )
 }
 
-/** Twelve whole digits keep every amount a safe integer, whatever the decimals of the currency. */
+/** The most whole digits a field takes. */
 const MAX_WHOLE_DIGITS = 12
+/** Fifteen digits in all keep every amount a safe integer, so a four-decimal currency takes eleven whole digits. */
+const MAX_DIGITS = 15
 
 /**
  * What an amount field shows while the person types: digits, grouped in
@@ -130,6 +131,7 @@ const MAX_WHOLE_DIGITS = 12
  */
 export function maskAmount(text: string, currency: string, caret = text.length): { text: string; caret: number } {
   const decimals = minorUnitDigits(currency)
+  const maxWhole = Math.min(MAX_WHOLE_DIGITS, MAX_DIGITS - decimals)
   const typed = toAsciiDigits(text)
 
   let whole = ''
@@ -148,7 +150,7 @@ export function maskAmount(text: string, currency: string, caret = text.length):
         if (fraction.length < decimals) fraction += character
       } else if (character === '0' && whole === '') {
         droppedZero = true
-      } else if (whole.length < MAX_WHOLE_DIGITS) {
+      } else if (whole.length < maxWhole) {
         whole += character
       }
     } else if (character === '.' && !hasSeparator && decimals > 0) {

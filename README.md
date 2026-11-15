@@ -31,10 +31,10 @@ src/
   components/    one folder per component: Name.tsx, Name.stories.tsx, index.ts,
                  and for two of them Name.contract.ts and Name.native.tsx
   native/        the React Native entry: theme provider, useTheme, the native exports
-  foundations/   Storybook pages for the tokens, read from the CSS at runtime
-  icons/         the few icons the components need
+  foundations/   Storybook pages for the tokens; the colour pages read the CSS at runtime
+  icons/         the few icons the components and their stories use
   lib/           cx (class names), money (minor units, formatting, parsing, the amount mask)
-                 and useAmountInput, the behaviour of every field that takes an amount
+                 and useAmountInput, how a field that takes an amount behaves
   styles.css     the one stylesheet a product imports
   index.ts       the public API
 scripts/         the smoke test for the built Storybook, and the React Native theme build
@@ -50,13 +50,13 @@ Tokens come in two tiers. **Primitives** (`--mal-emerald-400`) are raw values th
 
 3. **Design the props before the markup.**
    - A component that wraps one native element extends its props (`ComponentProps<'button'>`) and spreads the rest onto it, so `aria-*`, `data-*` and `ref` work without being declared. A composite such as `TransactionCard` lists its props and takes `className` for layout.
-   - A visual option is a string union named `variant`, `size` or `tone`. Never a boolean such as `isDanger`.
+   - A choice between looks is a string union named `variant`, `size` or `tone`, never a boolean such as `isDanger`.
    - Positions are `start` and `end`, never `left` and `right`.
    - No built-in copy. Take strings as props, or as a `labels` object with English defaults.
    - Make the inaccessible state impossible where you can. `InputField` requires `label`.
 
 4. **Style with semantic tokens only.** Use the utilities listed under Foundations in Storybook.
-   - One utility per CSS property per state. Variants are lookup objects, as in `Button.tsx`, so two classes never compete.
+   - One colour utility per property per state. Variants are lookup objects, as in `Button.tsx`, so two colour classes never compete.
    - Logical utilities: `ps-4`, `ms-2`, `text-start`.
    - No `dark:` classes. If the dark theme looks wrong, a token is missing. Add it (see below) instead of patching the component.
 
@@ -85,7 +85,7 @@ Most of this list is enforced. `pnpm test` fails on a raw colour, a `dark:` clas
 ## Adding a token
 
 1. If the value is new, add a primitive to `src/tokens/primitives.css`.
-2. Add the semantic token to `src/tokens/semantic.css`: the light value inside `@theme static`, the dark value under `[data-theme='dark']`. A test fails if either is missing.
+2. Add the semantic token to `src/tokens/semantic.css`, inside `@theme static`. A colour also needs its dark value under `[data-theme='dark']`, and a test fails if it is missing.
 3. If it is a text, border or focus colour, list the backgrounds it may sit on in `src/tokens/contrast.ts`.
 4. Run `pnpm tokens:native`, so the React Native theme gets the token too.
 5. Run `pnpm test`. It checks every listed pair against WCAG 2.2 in both themes, and that the React Native theme still matches the CSS.
@@ -145,8 +145,8 @@ To give another component a native version, add `Name.contract.ts`, `Name.native
 
 - **The token file is the configuration.** v4 reads its theme from CSS variables. The same variables are there for anything on the web that is not React, such as a marketing page or a chart.
 - **No runtime.** Styles are static CSS. Nothing is injected at render time, so styling never forces a component onto the client or adds script to the pages where load time matters most, such as onboarding.
-- **Theming without code.** The dark theme, and a dark panel inside a light page, are variable overrides under `[data-theme]`. Components do not know about them.
-- **The system can be closed.** With the default palette removed, `bg-emerald-500` produces no CSS, and a test rejects arbitrary values such as `bg-[#0b763a]`.
+- **Theming without code.** The dark theme, and a dark panel inside a light page, are variable overrides under `[data-theme]`. No component branches on the theme.
+- **The system can be closed.** With the default palette removed, `bg-emerald-500` produces no CSS, and a test rejects raw colours such as `bg-[#0b763a]`.
 - **Direction is built in.** Logical utilities (`ps-4`, `text-start`) make right-to-left the default behaviour, not a second stylesheet.
 
 The cost is long class strings, and variants kept by hand in lookup objects. CSS-in-JS would have given typed variants and colocated styles, at the price of a runtime or a build-time extractor, and a theme held in JavaScript, which plain CSS and static pages cannot read.

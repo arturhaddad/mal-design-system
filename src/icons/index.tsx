@@ -1,5 +1,5 @@
 /**
- * The icons the components need, drawn on a 24px grid with a 1.75px stroke.
+ * The icons the components and their stories use, drawn on a 24px grid with a 1.75px stroke.
  *
  * They are decorative by default (`aria-hidden`): the text beside an icon
  * carries the meaning, so nothing here is announced twice.
