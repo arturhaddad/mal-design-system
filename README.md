@@ -136,7 +136,7 @@ export function App() {
 
 In Storybook they sit under **React Native** and run in the browser through react-native-web. That is one alias in `vite.config.ts`, and only the React Native pages load it.
 
-They have not run on a phone or in a simulator, and this repository has no app. The browser shows their layout, colours and behaviour. It does not show a phone's fonts, keyboard, screen reader or right-to-left layout. The direction icon of the native `TransactionCard` is a text arrow, because the web icons are SVG and React Native needs a library to draw them.
+They have not run on a phone or in a simulator, and this repository has no app. The browser shows their layout, colours and behaviour. It does not show a phone's fonts, keyboard, screen reader or right-to-left layout. The direction arrow of the native `TransactionCard` is drawn from two plain views, because the web icons are SVG and React Native needs a library to draw them.
 
 To give another component a native version, add `Name.contract.ts`, `Name.native.tsx` and `Name.native.stories.tsx`, and export it from `src/native/index.ts`. Once the native file exists, `pnpm test` fails until the rest does.
 

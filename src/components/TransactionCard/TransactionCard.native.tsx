@@ -13,6 +13,20 @@ export interface TransactionCardProps extends TransactionCardContract {
 }
 
 /**
+ * The direction arrow, drawn from two views: a corner for the head and a line
+ * for the shaft. The web icons are SVG, which React Native only draws with a
+ * library. It points up and right, and is turned around for incoming money.
+ */
+function Arrow({ colour, incoming }: { colour: string; incoming: boolean }) {
+  return (
+    <View style={[styles.arrow, incoming && styles.arrowTurned]}>
+      <View style={[styles.arrowHead, { borderColor: colour }]} />
+      <View style={[styles.arrowShaft, { backgroundColor: colour }]} />
+    </View>
+  )
+}
+
+/**
  * The React Native TransactionCard. Same props and the same words as the web
  * one: both format the amount and the date with `formatTransaction`.
  */
@@ -48,17 +62,13 @@ export function TransactionCard({
 
   const content = (
     <>
-      {/* A text arrow. The web icons are SVG, which React Native only draws with react-native-svg. */}
       <View
-        aria-hidden
         style={[
           styles.icon,
           { borderRadius: radius.chip, backgroundColor: isIncoming ? background.successSubtle : background.subtle },
         ]}
       >
-        <Text style={[textStyle.heading, family, { color: isIncoming ? text.success : text.muted }]}>
-          {isIncoming ? '↙︎' : '↗︎'}
-        </Text>
+        <Arrow colour={isIncoming ? text.success : text.muted} incoming={isIncoming} />
       </View>
 
       <View style={styles.who}>
@@ -89,8 +99,6 @@ export function TransactionCard({
 
       <View style={styles.amount}>
         <Text
-          // The sign is silent in a screen reader, so the amount is read with a word before it.
-          aria-label={`${labels[direction]} ${transaction.amount}`}
           style={[
             textStyle.label,
             family,
@@ -113,11 +121,25 @@ export function TransactionCard({
     : { borderRadius: radius.control, paddingHorizontal: spacing * 2, paddingVertical: spacing * 3 }
   const layout = [styles.layout, { columnGap: spacing * 3 }, box]
 
-  if (!onPress) return <View style={layout}>{content}</View>
+  // A screen reader takes the card as one element. Its name starts with the text on screen, in
+  // the order it is written, because voice control matches a spoken name against that. The sign
+  // is silent in speech, so a word for the direction closes the name.
+  const summary = [title, badge?.label, description, transaction.amount, transaction.date, labels[direction]]
+    .filter(Boolean)
+    .join(', ')
+
+  if (!onPress) {
+    return (
+      <View accessible role="group" aria-label={summary} style={layout}>
+        {content}
+      </View>
+    )
+  }
 
   return (
     <Pressable
       role="button"
+      aria-label={summary}
       onPress={onPress}
       {...focusRing.handlers}
       style={({ pressed }) => [
@@ -140,4 +162,9 @@ const styles = StyleSheet.create({
   title: { flexShrink: 1 },
   amount: { alignItems: 'flex-end' },
   figures: { fontVariant: ['tabular-nums'] },
+  arrow: { width: 10, height: 10 },
+  arrowTurned: { transform: [{ rotate: '180deg' }] },
+  arrowHead: { position: 'absolute', top: 0, right: 0, width: 7, height: 7, borderTopWidth: 1.5, borderRightWidth: 1.5 },
+  // The diagonal of the 10 by 10 box, centred on it.
+  arrowShaft: { position: 'absolute', top: 4.25, left: -2, width: 14, height: 1.5, transform: [{ rotate: '-45deg' }] },
 })

@@ -64,7 +64,7 @@ export const Sizes: Story = {
 
 /** A loading button keeps its width and ignores the press. A disabled one uses its own colour tokens. */
 export const States: Story = {
-  parameters: { controls: { exclude: ['loading', 'disabled', 'children'] } },
+  parameters: { controls: { exclude: ['loading', 'loadingLabel', 'disabled', 'children'] } },
   render: (args) => (
     <View style={row}>
       <Button {...args} loading loadingLabel="Sending">
