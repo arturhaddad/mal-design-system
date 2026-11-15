@@ -2,61 +2,26 @@ import type { MouseEventHandler, ReactNode } from 'react'
 
 import { AlertIcon, ArrowDownLeftIcon, ArrowUpRightIcon, ClockIcon } from '../../icons'
 import { cx } from '../../lib/cx'
-import { formatMoney } from '../../lib/money'
 import { Badge } from '../Badge'
+import { formatTransaction } from './formatTransaction'
+import { defaultTransactionCardLabels } from './TransactionCard.contract'
+import type { TransactionCardContract, TransactionCardVariant } from './TransactionCard.contract'
 
-export type TransactionCardVariant = 'card' | 'row'
-export type TransactionDirection = 'incoming' | 'outgoing'
-export type TransactionStatus = 'completed' | 'pending' | 'failed'
+export type {
+  TransactionCardLabels,
+  TransactionCardVariant,
+  TransactionDirection,
+  TransactionStatus,
+} from './TransactionCard.contract'
 
-/** Every string the component can render on its own. Override them to translate. */
-export interface TransactionCardLabels {
-  /** Read before the amount by screen readers, where the "+" sign is silent. */
-  incoming: string
-  /** Read before the amount by screen readers, where the minus sign is silent. */
-  outgoing: string
-  pending: string
-  failed: string
-}
-
-export interface TransactionCardProps {
-  /** Who the money went to or came from. */
-  title: string
-  /** Category or note, e.g. "Groceries". */
-  description?: string
-  /** Amount in minor units (fils for AED), always positive. `direction` gives it a sign. */
-  amount: number
-  /** ISO 4217 currency code. */
-  currency: string
-  direction: TransactionDirection
-  /** `completed` shows no badge: the settled state is the default and needs no label. */
-  status?: TransactionStatus
-  /** When the transaction happened. */
-  date: Date | string | number
-  /**
-   * - `card`: a bordered surface that stands on its own, e.g. "latest transaction".
-   * - `row`: a borderless line for transaction lists.
-   */
-  variant?: TransactionCardVariant
+export interface TransactionCardProps extends TransactionCardContract {
   /** Replaces the default direction arrow, e.g. with a merchant category icon. */
   icon?: ReactNode
-  /** BCP 47 locale for the amount and the date. */
-  locale?: string
-  /** IANA time zone for the date. Fixed, so server and client render the same text. */
-  timeZone?: string
-  labels?: Partial<TransactionCardLabels>
   /** Renders the card as a link to the transaction. */
   href?: string
   /** Renders the card as a button. Ignored when `href` is set. */
   onClick?: MouseEventHandler<HTMLButtonElement>
   className?: string
-}
-
-const defaultLabels: TransactionCardLabels = {
-  incoming: 'Received',
-  outgoing: 'Paid',
-  pending: 'Pending',
-  failed: 'Failed',
 }
 
 const variants: Record<TransactionCardVariant, string> = {
@@ -90,22 +55,9 @@ export function TransactionCard({
   onClick,
   className,
 }: TransactionCardProps) {
-  const labels = { ...defaultLabels, ...labelOverrides }
+  const labels = { ...defaultTransactionCardLabels, ...labelOverrides }
   const isIncoming = direction === 'incoming'
-  const when = new Date(date)
-
-  const formattedAmount = formatMoney(isIncoming ? amount : -amount, currency, { locale, signDisplay: 'exceptZero' })
-  // Data comes from an API. A date that cannot be parsed drops the timestamp instead of crashing the list.
-  const hasValidDate = !Number.isNaN(when.getTime())
-  const formattedDate = hasValidDate
-    ? new Intl.DateTimeFormat(locale, {
-        day: 'numeric',
-        month: 'short',
-        hour: 'numeric',
-        minute: '2-digit',
-        timeZone,
-      }).format(when)
-    : null
+  const text = formatTransaction({ amount, currency, direction, date, locale, timeZone })
 
   // Only phrasing elements below: the same markup has to be valid inside <a> and <button>.
   const content = (
@@ -146,11 +98,11 @@ export function TransactionCard({
         >
           <span className="sr-only">{labels[direction]} </span>
           {/* <bdi> keeps sign, digits and currency in order inside right-to-left text. */}
-          <bdi>{formattedAmount}</bdi>
+          <bdi>{text.amount}</bdi>
         </span>
-        {hasValidDate && (
-          <time dateTime={when.toISOString()} className="text-body-sm text-muted">
-            {formattedDate}
+        {text.date && text.dateTime && (
+          <time dateTime={text.dateTime} className="text-body-sm text-muted">
+            {text.date}
           </time>
         )}
       </span>

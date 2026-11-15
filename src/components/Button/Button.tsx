@@ -2,34 +2,15 @@ import type { ComponentProps, MouseEvent, ReactNode } from 'react'
 
 import { SpinnerIcon } from '../../icons'
 import { cx } from '../../lib/cx'
+import type { ButtonContract, ButtonSize, ButtonVariant } from './Button.contract'
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
-export type ButtonSize = 'sm' | 'md' | 'lg'
+export type { ButtonSize, ButtonVariant } from './Button.contract'
 
-export interface ButtonProps extends ComponentProps<'button'> {
-  /**
-   * Visual weight of the action.
-   * - `primary`: the one main action of a view.
-   * - `secondary`: an alternative next to a primary.
-   * - `ghost`: low-emphasis actions such as "Cancel" or "Reset".
-   * - `danger`: actions that destroy or cannot be undone.
-   */
-  variant?: ButtonVariant
-  /** `md` is 44px tall, a comfortable touch target. `sm` is for dense, pointer-first UI. */
-  size?: ButtonSize
-  /**
-   * Shows a spinner and ignores activation. Unlike `disabled`, the button stays
-   * focusable, so keyboard and screen reader users are not thrown off it mid-task.
-   */
-  loading?: boolean
-  /** Announced to assistive technology while `loading`. Pass a translated string. */
-  loadingLabel?: string
+export interface ButtonProps extends ComponentProps<'button'>, ButtonContract {
   /** Icon before the label. "Start" follows the reading direction: left in English, right in Arabic. */
   iconStart?: ReactNode
   /** Icon after the label. */
   iconEnd?: ReactNode
-  /** Stretches the button to the width of its container. */
-  fullWidth?: boolean
 }
 
 const base = [
